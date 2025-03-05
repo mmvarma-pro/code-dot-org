@@ -1,10 +1,13 @@
 import CodebridgeRegistry from '@codebridge/CodebridgeRegistry';
+import {MiniApps} from '@codebridge/constants';
 import {AnyAction, Dispatch} from 'redux';
 
 import {MAIN_PYTHON_FILE} from '@cdo/apps/lab2/constants';
 import ProgressManager from '@cdo/apps/lab2/progress/ProgressManager';
 import {getFileByName} from '@cdo/apps/lab2/projects/utils';
 import {MultiFileSource, ProjectFile} from '@cdo/apps/lab2/types';
+import pythonlabI18n from '@cdo/apps/pythonlab/locale';
+import {getStore} from '@cdo/apps/redux';
 
 import {getValidationFromSource} from '../codebridge';
 
@@ -26,7 +29,7 @@ export async function handleRunClick(
 ) {
   const consoleManager = CodebridgeRegistry.getInstance().getConsoleManager();
   if (!source) {
-    consoleManager?.writeSystemMessage('You have no code to run.', appName);
+    consoleManager?.writeSystemMessage(pythonlabI18n.noCode(), appName);
     return;
   }
   if (runTests) {
@@ -36,13 +39,16 @@ export async function handleRunClick(
     const code = getFileByName(source.files, MAIN_PYTHON_FILE)?.contents;
     if (!code) {
       consoleManager?.writeSystemMessage(
-        `You have no ${MAIN_PYTHON_FILE} to run.`,
+        pythonlabI18n.noFileToRun({fileName: MAIN_PYTHON_FILE}),
         appName
       );
       return;
     }
-    consoleManager?.writeSystemMessage('Running program...', appName);
+    consoleManager?.writeSystemMessage(pythonlabI18n.runningProgram(), appName);
     await runPythonCode(code, source);
+    if (isNeighborhoodLevel()) {
+      CodebridgeRegistry.getInstance().getNeighborhood()?.onClose();
+    }
   }
 }
 
@@ -52,6 +58,10 @@ export async function runPythonCode(
   validationFile?: ProjectFile
 ) {
   try {
+    if (isNeighborhoodLevel()) {
+      CodebridgeRegistry.getInstance().getNeighborhood()?.reset();
+      CodebridgeRegistry.getInstance().getNeighborhood()?.onRun();
+    }
     return await asyncRun(mainFile, source, validationFile);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
@@ -62,6 +72,9 @@ export async function runPythonCode(
 }
 
 export function stopPythonCode() {
+  if (isNeighborhoodLevel()) {
+    CodebridgeRegistry.getInstance().getNeighborhood()?.onStop();
+  }
   // This will terminate the worker and create a new one if there is a running program.
   restartPyodideIfProgramIsRunning();
 }
@@ -77,7 +90,10 @@ export async function runAllTests(
   const validationToRun = validationFile || getValidationFromSource(source);
   const consoleManager = CodebridgeRegistry.getInstance().getConsoleManager();
   if (validationToRun) {
-    consoleManager?.writeSystemMessage(`Running level tests...`, appName);
+    consoleManager?.writeSystemMessage(
+      pythonlabI18n.runningLevelTests(),
+      appName
+    );
     progressManager?.resetValidation();
     // We only send the separate validation file, because otherwise the
     // source already has the validation file.
@@ -100,10 +116,16 @@ export async function runAllTests(
     }
   } else {
     consoleManager?.writeSystemMessage(
-      `Running your project's tests...`,
+      pythonlabI18n.runningProjectTests(),
       appName
     );
     // Otherwise, we look for files that follow the regex 'test*.py' and run those.
     await runPythonCode(runStudentTests(), source);
   }
+}
+
+function isNeighborhoodLevel() {
+  return (
+    getStore().getState().lab.levelProperties?.miniApp === MiniApps.Neighborhood
+  );
 }

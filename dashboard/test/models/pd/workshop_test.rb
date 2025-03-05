@@ -57,7 +57,7 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
   test 'query by enrolled teacher' do
     # Teachers enroll in a workshop as a whole
     teacher = create :teacher
-    create :pd_enrollment, workshop: @workshop, full_name: teacher.name, email: teacher.email_for_enrollments
+    create :pd_enrollment, workshop: @workshop, full_name: teacher.name, email: teacher.email
 
     # create a workshop with a different teacher enrollment, which should not be returned below
     other_workshop = create(:workshop)
@@ -74,7 +74,7 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     assert_empty Pd::Workshop.enrolled_in_by(teacher)
 
     # Email match only
-    enrollment.update!(email: teacher.email_for_enrollments)
+    enrollment.update!(email: teacher.email)
     assert_equal [@workshop], Pd::Workshop.enrolled_in_by(teacher)
 
     # UserId only
@@ -82,7 +82,12 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     assert_equal [@workshop], Pd::Workshop.enrolled_in_by(teacher)
 
     # Both email and user id. Should still find workshop exactly once
-    enrollment.update!(email: teacher.email_for_enrollments, user: teacher)
+    enrollment.update!(email: teacher.email, user: teacher)
+    assert_equal [@workshop], Pd::Workshop.enrolled_in_by(teacher)
+
+    # Alternate email match only
+    create :pd_teacher_application, user: teacher, status: 'accepted'
+    enrollment.update!(email: teacher.alternate_email, user: nil)
     assert_equal [@workshop], Pd::Workshop.enrolled_in_by(teacher)
   end
 
@@ -789,6 +794,22 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     assert_includes(e.message, 'bad email')
   end
 
+  test 'sends teacher_enrollment_reminder email to both the users email and alternate email if available and for a summer workshop' do
+    mock_mail = stub
+    mock_mail.stubs(:deliver_now)
+
+    teacher = create :teacher
+    workshop = create :summer_workshop, course: Pd::SharedWorkshopConstants::COURSE_CSD
+    application = create :pd_teacher_application, course: 'csd', application_year: workshop.school_year, user: teacher, status: 'accepted'
+    enrollment = create :pd_enrollment, application_id: application.id, user: teacher, workshop: workshop
+
+    Pd::Workshop.expects(:scheduled_start_in_days).returns([workshop])
+    Pd::WorkshopMailer.expects(:teacher_enrollment_reminder).with(enrollment, options: {:days_before => 1}).returns(mock_mail)
+    Pd::WorkshopMailer.expects(:teacher_enrollment_reminder).with(enrollment, options: {:days_before => 1}, to_email: teacher.alternate_email).returns(mock_mail)
+
+    Pd::Workshop.send_reminder_for_upcoming_in_days(1)
+  end
+
   test 'errors in organizer reminders in send_reminder_for_upcoming_in_days do not stop batch' do
     mock_mail = stub
     mock_mail.stubs(:deliver_now).returns(nil).then.returns(nil).then.returns(nil).then.returns(nil).then.returns(nil).then.raises(RuntimeError, 'bad email')
@@ -902,6 +923,21 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     Pd::Workshop.expects(:scheduled_start_in_days).returns([workshop])
 
     Pd::WorkshopMailer.expects(:teacher_pre_workshop_csa).returns(mock_mail).never
+    Pd::Workshop.send_teacher_pre_work_csa
+  end
+
+  test 'CSA teacher pre-work email sends to both the users email and alternate summer email if available' do
+    mock_mail = stub
+    mock_mail.stubs(:deliver_now).returns(nil)
+
+    teacher = create :teacher
+    workshop = create :csa_academic_year_workshop, num_facilitators: 2, subject: Pd::Workshop::SUBJECT_CSA_SUMMER_WORKSHOP
+    application = create :pd_teacher_application, course: 'csa', application_year: workshop.school_year, user: teacher, status: 'accepted'
+    enrollment = create :pd_enrollment, application_id: application.id, user: teacher, workshop: workshop
+
+    Pd::Workshop.expects(:scheduled_start_in_days).returns([workshop])
+    Pd::WorkshopMailer.expects(:teacher_pre_workshop_csa).with(enrollment).returns(mock_mail)
+    Pd::WorkshopMailer.expects(:teacher_pre_workshop_csa).with(enrollment, to_email: teacher.alternate_email).returns(mock_mail)
     Pd::Workshop.send_teacher_pre_work_csa
   end
 
@@ -1102,7 +1138,6 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
   test 'workshops not suppressing reminders by default will suppress_reminders once suppress_email is set' do
     workshop = build :workshop
 
-    workshop.virtual = false
     refute workshop.suppress_reminders?
 
     workshop.suppress_email = true
@@ -1485,7 +1520,6 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     workshop = build :workshop
 
     # Non-virtual workshops may suppress email or not
-    workshop.virtual = false
     workshop.suppress_email = false
     assert workshop.valid?
 
@@ -1493,7 +1527,7 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     assert workshop.valid?
 
     # Virtual workshops may suppress email or not (change from previous behavior)
-    workshop.virtual = true
+    workshop.sessions.first.session_format = 'virtual'
     workshop.suppress_email = false
     assert workshop.valid?
 
@@ -1516,7 +1550,6 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     workshop = build :pd_workshop,
       course: COURSE_CSP,
       subject: SUBJECT_CSP_WORKSHOP_1,
-      virtual: false,
       suppress_email: true
 
     assert workshop.valid?
@@ -1524,16 +1557,7 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
     workshop.subject = VIRTUAL_ONLY_SUBJECTS.first
     refute workshop.valid?
 
-    workshop.virtual = true
-    assert workshop.valid?
-  end
-
-  test 'friday_institute workshops must be virtual' do
-    workshop = build :workshop, third_party_provider: 'friday_institute', virtual: false
-    refute workshop.valid?
-
-    workshop.virtual = true
-    workshop.suppress_email = true
+    workshop.sessions.first.session_format = 'virtual'
     assert workshop.valid?
   end
 
@@ -1610,6 +1634,11 @@ class Pd::WorkshopTest < ActiveSupport::TestCase
   test 'workshop date range string is NA when no sessions' do
     workshop = create :workshop, num_sessions: 0
     assert_equal 'N/A', workshop.workshop_date_range_string
+  end
+
+  test 'bad time_zone value results in nil' do
+    workshop = create :workshop, time_zone: 'Bad/Zone'
+    assert_equal nil, workshop.time_zone
   end
 
   private def session_on_day(day_offset)

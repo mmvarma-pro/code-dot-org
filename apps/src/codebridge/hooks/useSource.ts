@@ -8,12 +8,13 @@ import {getCurrentLevel} from '@cdo/apps/code-studio/progressReduxSelectors';
 import {TestResults} from '@cdo/apps/constants';
 import {START_SOURCES} from '@cdo/apps/lab2/constants';
 import {isReadOnlyWorkspace} from '@cdo/apps/lab2/lab2Redux';
+import Lab2Registry from '@cdo/apps/lab2/Lab2Registry';
 import {
   getAppOptionsEditBlocks,
   getAppOptionsEditingExemplar,
 } from '@cdo/apps/lab2/projects/utils';
 import {
-  setAndSaveProjectSource,
+  setAndSaveProjectSources,
   setHasEdited,
   setProjectSource,
 } from '@cdo/apps/lab2/redux/lab2ProjectRedux';
@@ -29,7 +30,7 @@ import {useInitialSources} from './useInitialSources';
 export const useSource = (defaultSources: ProjectSources) => {
   const dispatch = useAppDispatch();
   const projectSource = useAppSelector(
-    state => state.lab2Project.projectSource
+    state => state.lab2Project.projectSources
   );
   const source = projectSource?.source as MultiFileSource;
   const isStartMode = getAppOptionsEditBlocks() === START_SOURCES;
@@ -62,7 +63,7 @@ export const useSource = (defaultSources: ProjectSources) => {
     () => (newProjectSource: ProjectSources) => {
       const saveFunction = isReadOnly
         ? setProjectSource
-        : setAndSaveProjectSource;
+        : setAndSaveProjectSources;
       dispatch(saveFunction(newProjectSource));
     },
     [dispatch, isReadOnly]
@@ -148,6 +149,14 @@ export const useSource = (defaultSources: ProjectSources) => {
       initialSources !== previousInitialSources.current
     ) {
       if (initialSources) {
+        // Set the last source in project manager to initial sources.
+        // This prevents us from immediately saving the source on load,
+        // as we only want to save when the user makes a change.
+        // Initial sources always comes from the server, so we never need to save
+        // it again.
+        Lab2Registry.getInstance()
+          .getProjectManager()
+          ?.setLastSource(initialSources);
         setSourceHelper(initialSources);
       }
       if (levelId) {

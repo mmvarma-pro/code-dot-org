@@ -9,7 +9,7 @@
     },
     "new_name": null,
     "family_name": null,
-    "serialized_at": "2025-01-10 22:16:21 UTC",
+    "serialized_at": "2025-02-10 22:22:59 UTC",
     "published_state": null,
     "instruction_type": null,
     "instructor_audience": null,
@@ -34,7 +34,7 @@
   "lessons": [
     {
       "key": "lesson-4",
-      "name": "Welcome to Music Lab! ",
+      "name": "Welcome to Programming with Music Lab! ",
       "absolute_position": 1,
       "lockable": false,
       "has_lesson_plan": false,
@@ -91,6 +91,21 @@
         "lesson_group.key": "",
         "script.name": "sandbox-pl-teaching-k5-music-lab"
       }
+    },
+    {
+      "key": "lesson-5",
+      "name": "Next Steps",
+      "absolute_position": 5,
+      "lockable": false,
+      "has_lesson_plan": false,
+      "relative_position": 5,
+      "properties": {
+      },
+      "seeding_key": {
+        "lesson.key": "lesson-5",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab"
+      }
     }
   ],
   "lesson_activities": [
@@ -141,6 +156,18 @@
         "lesson_group.key": "",
         "script.name": "sandbox-pl-teaching-k5-music-lab"
       }
+    },
+    {
+      "key": "e94b9864-e01e-4111-90c2-0b2073f4a8f9",
+      "position": 1,
+      "properties": {
+      },
+      "seeding_key": {
+        "lesson_activity.key": "e94b9864-e01e-4111-90c2-0b2073f4a8f9",
+        "lesson.key": "lesson-5",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab"
+      }
     }
   ],
   "activity_sections": [
@@ -183,6 +210,16 @@
         "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f",
         "lesson_activity.key": "7f7ebaaa-aab4-4647-918f-ab8b2183b09c"
       }
+    },
+    {
+      "key": "a8425886-e1cb-460e-9a38-249777a44317",
+      "position": 1,
+      "properties": {
+      },
+      "seeding_key": {
+        "activity_section.key": "a8425886-e1cb-460e-9a38-249777a44317",
+        "lesson_activity.key": "e94b9864-e01e-4111-90c2-0b2073f4a8f9"
+      }
     }
   ],
   "script_levels": [
@@ -192,6 +229,9 @@
       "activity_section_position": 1,
       "assessment": false,
       "properties": {
+        "level_keys": [
+          "MLself-paced-pl-k5-2-intro_2024_Melissa"
+        ]
       },
       "bonus": false,
       "seeding_key": {
@@ -213,6 +253,9 @@
       "activity_section_position": 2,
       "assessment": false,
       "properties": {
+        "level_keys": [
+          "MLOPD-K5-PLVid_2023_K5CSConcepts"
+        ]
       },
       "bonus": false,
       "seeding_key": {
@@ -234,6 +277,9 @@
       "activity_section_position": 3,
       "assessment": false,
       "properties": {
+        "level_keys": [
+          "MLPLGuide_L1_Opening2"
+        ]
       },
       "bonus": false,
       "seeding_key": {
@@ -255,11 +301,14 @@
       "activity_section_position": 4,
       "assessment": false,
       "properties": {
+        "level_keys": [
+          "ML-Panel Levels"
+        ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "MLOPD-K5 Why teach CS_copy_2023_MelissaSandbox_CSBasics"
+          "ML-Panel Levels"
         ],
         "lesson.key": "lesson-4",
         "lesson_group.key": "",
@@ -267,7 +316,7 @@
         "activity_section.key": "387886bc-1de9-4e94-8287-f5a5f2ba88d9"
       },
       "level_keys": [
-        "MLOPD-K5 Why teach CS_copy_2023_MelissaSandbox_CSBasics"
+        "ML-Panel Levels"
       ]
     },
     {
@@ -276,6 +325,33 @@
       "activity_section_position": 5,
       "assessment": false,
       "properties": {
+        "level_keys": [
+          "PLmusic-coding-intro-seq-panel_1"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "PLmusic-coding-intro-seq-panel_1"
+        ],
+        "lesson.key": "lesson-4",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "387886bc-1de9-4e94-8287-f5a5f2ba88d9"
+      },
+      "level_keys": [
+        "PLmusic-coding-intro-seq-panel_1"
+      ]
+    },
+    {
+      "chapter": 6,
+      "position": 6,
+      "activity_section_position": 6,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "MLPLPLSP-VPL-21-CSD-mod5-Overview-AIML_-22_23k5PLPL_prod"
+        ]
       },
       "bonus": false,
       "seeding_key": {
@@ -292,11 +368,14 @@
       ]
     },
     {
-      "chapter": 6,
-      "position": 6,
-      "activity_section_position": 6,
+      "chapter": 7,
+      "position": 7,
+      "activity_section_position": 7,
       "assessment": false,
       "properties": {
+        "level_keys": [
+          "MLCSC-SelfPaced-debugging2_2023_K5CSConcepts"
+        ]
       },
       "bonus": false,
       "seeding_key": {
@@ -313,9 +392,33 @@
       ]
     },
     {
-      "chapter": 7,
+      "chapter": 8,
       "position": 1,
       "activity_section_position": 1,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "songwriterstoolbox-pl"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "songwriterstoolbox-pl"
+        ],
+        "lesson.key": "Songwriter's Toolbox",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
+      },
+      "level_keys": [
+        "songwriterstoolbox-pl"
+      ]
+    },
+    {
+      "chapter": 9,
+      "position": 2,
+      "activity_section_position": 2,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -337,9 +440,9 @@
       ]
     },
     {
-      "chapter": 8,
-      "position": 2,
-      "activity_section_position": 2,
+      "chapter": 10,
+      "position": 3,
+      "activity_section_position": 3,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -361,9 +464,9 @@
       ]
     },
     {
-      "chapter": 9,
-      "position": 3,
-      "activity_section_position": 3,
+      "chapter": 11,
+      "position": 4,
+      "activity_section_position": 4,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -385,19 +488,19 @@
       ]
     },
     {
-      "chapter": 10,
-      "position": 4,
-      "activity_section_position": 4,
+      "chapter": 12,
+      "position": 5,
+      "activity_section_position": 5,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-seq-panel_1"
+          "PLmusic-coding-intro-seq-panel"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-seq-panel_1"
+          "PLmusic-coding-intro-seq-panel"
         ],
         "lesson.key": "Songwriter's Toolbox",
         "lesson_group.key": "",
@@ -405,13 +508,13 @@
         "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
       },
       "level_keys": [
-        "music-coding-intro-seq-panel_1"
+        "PLmusic-coding-intro-seq-panel"
       ]
     },
     {
-      "chapter": 11,
-      "position": 5,
-      "activity_section_position": 5,
+      "chapter": 13,
+      "position": 6,
+      "activity_section_position": 6,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -433,9 +536,9 @@
       ]
     },
     {
-      "chapter": 12,
-      "position": 6,
-      "activity_section_position": 6,
+      "chapter": 14,
+      "position": 7,
+      "activity_section_position": 7,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -457,9 +560,33 @@
       ]
     },
     {
-      "chapter": 13,
-      "position": 7,
-      "activity_section_position": 7,
+      "chapter": 15,
+      "position": 8,
+      "activity_section_position": 8,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "ML-Loops"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "ML-Loops"
+        ],
+        "lesson.key": "Songwriter's Toolbox",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
+      },
+      "level_keys": [
+        "ML-Loops"
+      ]
+    },
+    {
+      "chapter": 16,
+      "position": 9,
+      "activity_section_position": 9,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -481,19 +608,19 @@
       ]
     },
     {
-      "chapter": 14,
-      "position": 8,
-      "activity_section_position": 8,
+      "chapter": 17,
+      "position": 10,
+      "activity_section_position": 10,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-seq-panel-rests_1"
+          "PLmusic-coding-intro-seq-panel-rests"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-seq-panel-rests_1"
+          "PLmusic-coding-intro-seq-panel-rests"
         ],
         "lesson.key": "Songwriter's Toolbox",
         "lesson_group.key": "",
@@ -501,13 +628,13 @@
         "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
       },
       "level_keys": [
-        "music-coding-intro-seq-panel-rests_1"
+        "PLmusic-coding-intro-seq-panel-rests"
       ]
     },
     {
-      "chapter": 15,
-      "position": 9,
-      "activity_section_position": 9,
+      "chapter": 18,
+      "position": 11,
+      "activity_section_position": 11,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -529,9 +656,9 @@
       ]
     },
     {
-      "chapter": 16,
-      "position": 10,
-      "activity_section_position": 10,
+      "chapter": 19,
+      "position": 12,
+      "activity_section_position": 12,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -553,19 +680,19 @@
       ]
     },
     {
-      "chapter": 17,
-      "position": 11,
-      "activity_section_position": 11,
+      "chapter": 20,
+      "position": 13,
+      "activity_section_position": 13,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-drop-panel_1"
+          "PLmusic-coding-intro-drop-panel"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-drop-panel_1"
+          "PLmusic-coding-intro-drop-panel"
         ],
         "lesson.key": "Songwriter's Toolbox",
         "lesson_group.key": "",
@@ -573,13 +700,13 @@
         "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
       },
       "level_keys": [
-        "music-coding-intro-drop-panel_1"
+        "PLmusic-coding-intro-drop-panel"
       ]
     },
     {
-      "chapter": 18,
-      "position": 12,
-      "activity_section_position": 12,
+      "chapter": 21,
+      "position": 14,
+      "activity_section_position": 14,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -601,9 +728,9 @@
       ]
     },
     {
-      "chapter": 19,
-      "position": 13,
-      "activity_section_position": 13,
+      "chapter": 22,
+      "position": 15,
+      "activity_section_position": 15,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -625,9 +752,9 @@
       ]
     },
     {
-      "chapter": 20,
-      "position": 14,
-      "activity_section_position": 14,
+      "chapter": 23,
+      "position": 16,
+      "activity_section_position": 16,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -649,19 +776,19 @@
       ]
     },
     {
-      "chapter": 21,
+      "chapter": 24,
       "position": 1,
       "activity_section_position": 1,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-career2-panel_1"
+          "MLpl-k5-2-behaviors -intro_2024_K5block"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-career2-panel_1"
+          "MLpl-k5-2-behaviors -intro_2024_K5block"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -669,23 +796,23 @@
         "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
       },
       "level_keys": [
-        "music-coding-intro-career2-panel_1"
+        "MLpl-k5-2-behaviors -intro_2024_K5block"
       ]
     },
     {
-      "chapter": 22,
+      "chapter": 25,
       "position": 2,
       "activity_section_position": 2,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-functions-need_1"
+          "music-coding-intro-functions-video-hold"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-functions-need_1"
+          "music-coding-intro-functions-video-hold"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -693,23 +820,23 @@
         "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
       },
       "level_keys": [
-        "music-coding-intro-functions-need_1"
+        "music-coding-intro-functions-video-hold"
       ]
     },
     {
-      "chapter": 23,
+      "chapter": 26,
       "position": 3,
       "activity_section_position": 3,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-functions-panel_1"
+          "PLmusic-coding-intro-functions-need"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-functions-panel_1"
+          "PLmusic-coding-intro-functions-need"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -717,13 +844,61 @@
         "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
       },
       "level_keys": [
-        "music-coding-intro-functions-panel_1"
+        "PLmusic-coding-intro-functions-need"
       ]
     },
     {
-      "chapter": 24,
+      "chapter": 27,
       "position": 4,
       "activity_section_position": 4,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "PLmusic-coding-intro-functions-panel"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "PLmusic-coding-intro-functions-panel"
+        ],
+        "lesson.key": "Producer Power",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      },
+      "level_keys": [
+        "PLmusic-coding-intro-functions-panel"
+      ]
+    },
+    {
+      "chapter": 28,
+      "position": 5,
+      "activity_section_position": 5,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "MusicLab-functions-info"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "MusicLab-functions-info"
+        ],
+        "lesson.key": "Producer Power",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      },
+      "level_keys": [
+        "MusicLab-functions-info"
+      ]
+    },
+    {
+      "chapter": 29,
+      "position": 6,
+      "activity_section_position": 6,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -745,9 +920,9 @@
       ]
     },
     {
-      "chapter": 25,
-      "position": 5,
-      "activity_section_position": 5,
+      "chapter": 30,
+      "position": 7,
+      "activity_section_position": 7,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -769,67 +944,19 @@
       ]
     },
     {
-      "chapter": 26,
-      "position": 6,
-      "activity_section_position": 6,
-      "assessment": false,
-      "properties": {
-        "level_keys": [
-          "music-coding-intro-functions-use_1"
-        ]
-      },
-      "bonus": false,
-      "seeding_key": {
-        "script_level.level_keys": [
-          "music-coding-intro-functions-use_1"
-        ],
-        "lesson.key": "Producer Power",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
-      },
-      "level_keys": [
-        "music-coding-intro-functions-use_1"
-      ]
-    },
-    {
-      "chapter": 27,
-      "position": 7,
-      "activity_section_position": 7,
-      "assessment": false,
-      "properties": {
-        "level_keys": [
-          "music-coding-intro-functions-chorus_1"
-        ]
-      },
-      "bonus": false,
-      "seeding_key": {
-        "script_level.level_keys": [
-          "music-coding-intro-functions-chorus_1"
-        ],
-        "lesson.key": "Producer Power",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
-      },
-      "level_keys": [
-        "music-coding-intro-functions-chorus_1"
-      ]
-    },
-    {
-      "chapter": 28,
+      "chapter": 31,
       "position": 8,
       "activity_section_position": 8,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-functions-chorus2_1"
+          "PLmusic-coding-intro-functions-panel2"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-functions-chorus2_1"
+          "PLmusic-coding-intro-functions-panel2"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -837,23 +964,23 @@
         "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
       },
       "level_keys": [
-        "music-coding-intro-functions-chorus2_1"
+        "PLmusic-coding-intro-functions-panel2"
       ]
     },
     {
-      "chapter": 29,
+      "chapter": 32,
       "position": 9,
       "activity_section_position": 9,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-functions-panel2_1"
+          "MLU2L4 Multiple Choice packets2022_2023"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-functions-panel2_1"
+          "MLU2L4 Multiple Choice packets2022_2023"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -861,11 +988,11 @@
         "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
       },
       "level_keys": [
-        "music-coding-intro-functions-panel2_1"
+        "MLU2L4 Multiple Choice packets2022_2023"
       ]
     },
     {
-      "chapter": 30,
+      "chapter": 33,
       "position": 10,
       "activity_section_position": 10,
       "assessment": false,
@@ -889,7 +1016,7 @@
       ]
     },
     {
-      "chapter": 31,
+      "chapter": 34,
       "position": 11,
       "activity_section_position": 11,
       "assessment": false,
@@ -913,9 +1040,57 @@
       ]
     },
     {
-      "chapter": 32,
+      "chapter": 35,
+      "position": 12,
+      "activity_section_position": 12,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "MusicLab-functions"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "MusicLab-functions"
+        ],
+        "lesson.key": "Producer Power",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      },
+      "level_keys": [
+        "MusicLab-functions"
+      ]
+    },
+    {
+      "chapter": 36,
       "position": 1,
       "activity_section_position": 1,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "sound-designers-studio-PL"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "sound-designers-studio-PL"
+        ],
+        "lesson.key": "Sound Designer's Studio",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
+      },
+      "level_keys": [
+        "sound-designers-studio-PL"
+      ]
+    },
+    {
+      "chapter": 37,
+      "position": 2,
+      "activity_section_position": 2,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -937,9 +1112,9 @@
       ]
     },
     {
-      "chapter": 33,
-      "position": 2,
-      "activity_section_position": 2,
+      "chapter": 38,
+      "position": 3,
+      "activity_section_position": 3,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -961,9 +1136,9 @@
       ]
     },
     {
-      "chapter": 34,
-      "position": 3,
-      "activity_section_position": 3,
+      "chapter": 39,
+      "position": 4,
+      "activity_section_position": 4,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -985,9 +1160,9 @@
       ]
     },
     {
-      "chapter": 35,
-      "position": 4,
-      "activity_section_position": 4,
+      "chapter": 40,
+      "position": 5,
+      "activity_section_position": 5,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -1009,9 +1184,9 @@
       ]
     },
     {
-      "chapter": 36,
-      "position": 5,
-      "activity_section_position": 5,
+      "chapter": 41,
+      "position": 6,
+      "activity_section_position": 6,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -1033,43 +1208,19 @@
       ]
     },
     {
-      "chapter": 37,
-      "position": 6,
-      "activity_section_position": 6,
-      "assessment": false,
-      "properties": {
-        "level_keys": [
-          "music-coding-intro-event-functions_1"
-        ]
-      },
-      "bonus": false,
-      "seeding_key": {
-        "script_level.level_keys": [
-          "music-coding-intro-event-functions_1"
-        ],
-        "lesson.key": "Sound Designer's Studio",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
-      },
-      "level_keys": [
-        "music-coding-intro-event-functions_1"
-      ]
-    },
-    {
-      "chapter": 38,
+      "chapter": 42,
       "position": 7,
       "activity_section_position": 7,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-effects-panel_1"
+          "PLmusic-coding-intro-event-functions"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-effects-panel_1"
+          "PLmusic-coding-intro-event-functions"
         ],
         "lesson.key": "Sound Designer's Studio",
         "lesson_group.key": "",
@@ -1077,37 +1228,13 @@
         "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
       },
       "level_keys": [
-        "music-coding-intro-effects-panel_1"
+        "PLmusic-coding-intro-event-functions"
       ]
     },
     {
-      "chapter": 39,
+      "chapter": 43,
       "position": 8,
       "activity_section_position": 8,
-      "assessment": false,
-      "properties": {
-        "level_keys": [
-          "music-coding-intro-effects_1"
-        ]
-      },
-      "bonus": false,
-      "seeding_key": {
-        "script_level.level_keys": [
-          "music-coding-intro-effects_1"
-        ],
-        "lesson.key": "Sound Designer's Studio",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
-      },
-      "level_keys": [
-        "music-coding-intro-effects_1"
-      ]
-    },
-    {
-      "chapter": 40,
-      "position": 9,
-      "activity_section_position": 9,
       "assessment": false,
       "properties": {
         "level_keys": [
@@ -1129,27 +1256,51 @@
       ]
     },
     {
-      "chapter": 41,
-      "position": 10,
-      "activity_section_position": 10,
+      "chapter": 44,
+      "position": 1,
+      "activity_section_position": 1,
       "assessment": false,
       "properties": {
         "level_keys": [
-          "music-coding-intro-event-make_1"
+          "ML-next-steps"
         ]
       },
       "bonus": false,
       "seeding_key": {
         "script_level.level_keys": [
-          "music-coding-intro-event-make_1"
+          "ML-next-steps"
         ],
-        "lesson.key": "Sound Designer's Studio",
+        "lesson.key": "lesson-5",
         "lesson_group.key": "",
         "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
+        "activity_section.key": "a8425886-e1cb-460e-9a38-249777a44317"
       },
       "level_keys": [
-        "music-coding-intro-event-make_1"
+        "ML-next-steps"
+      ]
+    },
+    {
+      "chapter": 45,
+      "position": 2,
+      "activity_section_position": 2,
+      "assessment": false,
+      "properties": {
+        "level_keys": [
+          "MLpl-k5-2_PLexperiences_2024"
+        ]
+      },
+      "bonus": false,
+      "seeding_key": {
+        "script_level.level_keys": [
+          "MLpl-k5-2_PLexperiences_2024"
+        ],
+        "lesson.key": "lesson-5",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "a8425886-e1cb-460e-9a38-249777a44317"
+      },
+      "level_keys": [
+        "MLpl-k5-2_PLexperiences_2024"
       ]
     }
   ],
@@ -1192,9 +1343,21 @@
     },
     {
       "seeding_key": {
-        "level.key": "MLOPD-K5 Why teach CS_copy_2023_MelissaSandbox_CSBasics",
+        "level.key": "ML-Panel Levels",
         "script_level.level_keys": [
-          "MLOPD-K5 Why teach CS_copy_2023_MelissaSandbox_CSBasics"
+          "ML-Panel Levels"
+        ],
+        "lesson.key": "lesson-4",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "387886bc-1de9-4e94-8287-f5a5f2ba88d9"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "PLmusic-coding-intro-seq-panel_1",
+        "script_level.level_keys": [
+          "PLmusic-coding-intro-seq-panel_1"
         ],
         "lesson.key": "lesson-4",
         "lesson_group.key": "",
@@ -1224,6 +1387,18 @@
         "lesson_group.key": "",
         "script.name": "sandbox-pl-teaching-k5-music-lab",
         "activity_section.key": "387886bc-1de9-4e94-8287-f5a5f2ba88d9"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "songwriterstoolbox-pl",
+        "script_level.level_keys": [
+          "songwriterstoolbox-pl"
+        ],
+        "lesson.key": "Songwriter's Toolbox",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
       }
     },
     {
@@ -1264,9 +1439,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-seq-panel_1",
+        "level.key": "PLmusic-coding-intro-seq-panel",
         "script_level.level_keys": [
-          "music-coding-intro-seq-panel_1"
+          "PLmusic-coding-intro-seq-panel"
         ],
         "lesson.key": "Songwriter's Toolbox",
         "lesson_group.key": "",
@@ -1300,6 +1475,18 @@
     },
     {
       "seeding_key": {
+        "level.key": "ML-Loops",
+        "script_level.level_keys": [
+          "ML-Loops"
+        ],
+        "lesson.key": "Songwriter's Toolbox",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "c715d961-3ff4-4449-afa4-39e23c3b8680"
+      }
+    },
+    {
+      "seeding_key": {
         "level.key": "music-coding-intro-5sounds_1",
         "script_level.level_keys": [
           "music-coding-intro-5sounds_1"
@@ -1312,9 +1499,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-seq-panel-rests_1",
+        "level.key": "PLmusic-coding-intro-seq-panel-rests",
         "script_level.level_keys": [
-          "music-coding-intro-seq-panel-rests_1"
+          "PLmusic-coding-intro-seq-panel-rests"
         ],
         "lesson.key": "Songwriter's Toolbox",
         "lesson_group.key": "",
@@ -1348,9 +1535,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-drop-panel_1",
+        "level.key": "PLmusic-coding-intro-drop-panel",
         "script_level.level_keys": [
-          "music-coding-intro-drop-panel_1"
+          "PLmusic-coding-intro-drop-panel"
         ],
         "lesson.key": "Songwriter's Toolbox",
         "lesson_group.key": "",
@@ -1396,9 +1583,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-career2-panel_1",
+        "level.key": "MLpl-k5-2-behaviors -intro_2024_K5block",
         "script_level.level_keys": [
-          "music-coding-intro-career2-panel_1"
+          "MLpl-k5-2-behaviors -intro_2024_K5block"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -1408,9 +1595,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-functions-need_1",
+        "level.key": "music-coding-intro-functions-video-hold",
         "script_level.level_keys": [
-          "music-coding-intro-functions-need_1"
+          "music-coding-intro-functions-video-hold"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -1420,9 +1607,33 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-functions-panel_1",
+        "level.key": "PLmusic-coding-intro-functions-need",
         "script_level.level_keys": [
-          "music-coding-intro-functions-panel_1"
+          "PLmusic-coding-intro-functions-need"
+        ],
+        "lesson.key": "Producer Power",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "PLmusic-coding-intro-functions-panel",
+        "script_level.level_keys": [
+          "PLmusic-coding-intro-functions-panel"
+        ],
+        "lesson.key": "Producer Power",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "MusicLab-functions-info",
+        "script_level.level_keys": [
+          "MusicLab-functions-info"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -1456,9 +1667,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-functions-use_1",
+        "level.key": "PLmusic-coding-intro-functions-panel2",
         "script_level.level_keys": [
-          "music-coding-intro-functions-use_1"
+          "PLmusic-coding-intro-functions-panel2"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -1468,33 +1679,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-functions-chorus_1",
+        "level.key": "MLU2L4 Multiple Choice packets2022_2023",
         "script_level.level_keys": [
-          "music-coding-intro-functions-chorus_1"
-        ],
-        "lesson.key": "Producer Power",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
-      }
-    },
-    {
-      "seeding_key": {
-        "level.key": "music-coding-intro-functions-chorus2_1",
-        "script_level.level_keys": [
-          "music-coding-intro-functions-chorus2_1"
-        ],
-        "lesson.key": "Producer Power",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
-      }
-    },
-    {
-      "seeding_key": {
-        "level.key": "music-coding-intro-functions-panel2_1",
-        "script_level.level_keys": [
-          "music-coding-intro-functions-panel2_1"
+          "MLU2L4 Multiple Choice packets2022_2023"
         ],
         "lesson.key": "Producer Power",
         "lesson_group.key": "",
@@ -1524,6 +1711,30 @@
         "lesson_group.key": "",
         "script.name": "sandbox-pl-teaching-k5-music-lab",
         "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "MusicLab-functions",
+        "script_level.level_keys": [
+          "MusicLab-functions"
+        ],
+        "lesson.key": "Producer Power",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8a1520c5-0a77-49cb-8bcc-d58eb7402d56"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "sound-designers-studio-PL",
+        "script_level.level_keys": [
+          "sound-designers-studio-PL"
+        ],
+        "lesson.key": "Sound Designer's Studio",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
       }
     },
     {
@@ -1588,33 +1799,9 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-event-functions_1",
+        "level.key": "PLmusic-coding-intro-event-functions",
         "script_level.level_keys": [
-          "music-coding-intro-event-functions_1"
-        ],
-        "lesson.key": "Sound Designer's Studio",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
-      }
-    },
-    {
-      "seeding_key": {
-        "level.key": "music-coding-intro-effects-panel_1",
-        "script_level.level_keys": [
-          "music-coding-intro-effects-panel_1"
-        ],
-        "lesson.key": "Sound Designer's Studio",
-        "lesson_group.key": "",
-        "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
-      }
-    },
-    {
-      "seeding_key": {
-        "level.key": "music-coding-intro-effects_1",
-        "script_level.level_keys": [
-          "music-coding-intro-effects_1"
+          "PLmusic-coding-intro-event-functions"
         ],
         "lesson.key": "Sound Designer's Studio",
         "lesson_group.key": "",
@@ -1636,14 +1823,26 @@
     },
     {
       "seeding_key": {
-        "level.key": "music-coding-intro-event-make_1",
+        "level.key": "ML-next-steps",
         "script_level.level_keys": [
-          "music-coding-intro-event-make_1"
+          "ML-next-steps"
         ],
-        "lesson.key": "Sound Designer's Studio",
+        "lesson.key": "lesson-5",
         "lesson_group.key": "",
         "script.name": "sandbox-pl-teaching-k5-music-lab",
-        "activity_section.key": "8ae1705d-0649-4666-b6fe-7073b9b4103f"
+        "activity_section.key": "a8425886-e1cb-460e-9a38-249777a44317"
+      }
+    },
+    {
+      "seeding_key": {
+        "level.key": "MLpl-k5-2_PLexperiences_2024",
+        "script_level.level_keys": [
+          "MLpl-k5-2_PLexperiences_2024"
+        ],
+        "lesson.key": "lesson-5",
+        "lesson_group.key": "",
+        "script.name": "sandbox-pl-teaching-k5-music-lab",
+        "activity_section.key": "a8425886-e1cb-460e-9a38-249777a44317"
       }
     }
   ],

@@ -1,6 +1,6 @@
+import Button, {buttonColors} from '@code-dot-org/component-library/button';
 import React, {useState} from 'react';
 
-import Button, {buttonColors} from '@cdo/apps/componentLibrary/button/Button';
 import {EVENTS} from '@cdo/apps/metrics/AnalyticsConstants';
 import analyticsReporter from '@cdo/apps/metrics/AnalyticsReporter';
 import {useAppSelector} from '@cdo/apps/util/reduxHooks';
@@ -10,7 +10,7 @@ import {FeedbackData} from '../interactionsApi';
 
 import AssistantMessageFeedbackDetails from './AssistantMessageFeedbackDetails';
 
-import style from './chat-workspace.module.scss';
+import style from './ai-tutor.module.scss';
 
 interface AssistantMessageProps {
   messageId: number | undefined;

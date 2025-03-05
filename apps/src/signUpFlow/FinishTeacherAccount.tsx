@@ -1,18 +1,19 @@
-import classNames from 'classnames';
-import cookies from 'js-cookie';
-import React, {useState, useEffect, useMemo} from 'react';
-
-import {Button, buttonColors} from '@cdo/apps/componentLibrary/button';
-import Checkbox from '@cdo/apps/componentLibrary/checkbox/Checkbox';
-import CloseButton from '@cdo/apps/componentLibrary/closeButton/CloseButton';
-import FontAwesomeV6Icon from '@cdo/apps/componentLibrary/fontAwesomeV6Icon/FontAwesomeV6Icon';
-import TextField from '@cdo/apps/componentLibrary/textField/TextField';
+import {Button, buttonColors} from '@code-dot-org/component-library/button';
+import Checkbox from '@code-dot-org/component-library/checkbox';
+import CloseButton from '@code-dot-org/component-library/closeButton';
+import {SimpleDropdown} from '@code-dot-org/component-library/dropdown';
+import FontAwesomeV6Icon from '@code-dot-org/component-library/fontAwesomeV6Icon';
+import TextField from '@code-dot-org/component-library/textField';
 import {
   BodyThreeText,
   BodyFourText,
   BodyTwoText,
   Heading2,
-} from '@cdo/apps/componentLibrary/typography';
+} from '@code-dot-org/component-library/typography';
+import classNames from 'classnames';
+import cookies from 'js-cookie';
+import React, {useState, useEffect, useMemo} from 'react';
+
 import {EVENTS, PLATFORMS} from '@cdo/apps/metrics/AnalyticsConstants';
 import analyticsReporter from '@cdo/apps/metrics/AnalyticsReporter';
 import statsigReporter from '@cdo/apps/metrics/StatsigReporter';
@@ -20,9 +21,11 @@ import {schoolInfoInvalid} from '@cdo/apps/schoolInfo/utils/schoolInfoInvalid';
 import SafeMarkdown from '@cdo/apps/templates/SafeMarkdown';
 import SchoolDataInputs from '@cdo/apps/templates/SchoolDataInputs';
 import {getAuthenticityToken} from '@cdo/apps/util/AuthenticityTokenStore';
-import {UserTypes} from '@cdo/generated-scripts/sharedConstants';
+import trackEvent from '@cdo/apps/util/trackEvent';
+import {UserTypes, EducatorRoles} from '@cdo/generated-scripts/sharedConstants';
 
 import {useSchoolInfo} from '../schoolInfo/hooks/useSchoolInfo';
+import {buildSchoolData} from '../schoolInfo/utils/buildSchoolData';
 import {navigateToHref} from '../utils';
 
 import locale from './locale';
@@ -38,25 +41,49 @@ import {
 
 import style from './signUpFlowStyles.module.scss';
 
+const roleItemGroups = [
+  {
+    label: '',
+    groupItems: [{value: '', text: locale.select_a_role()}],
+  },
+  ...Object.entries(
+    EducatorRoles.reduce((groups, {category, value}) => {
+      const text = locale[value]?.() ?? '';
+      const categoryLabel = locale[category]?.() ?? '';
+      groups[categoryLabel] = groups[categoryLabel] ?? [];
+      groups[categoryLabel].push({value, text});
+      return groups;
+    }, {} as Record<string, {value: string; text: string}[]>)
+  ).map(([label, groupItems]) => ({label, groupItems})),
+];
+
 const FinishTeacherAccount: React.FunctionComponent<{
   usIp: boolean;
   countryCode: string;
-}> = ({usIp, countryCode}) => {
+  redirectUrl?: string;
+}> = ({usIp, countryCode, redirectUrl}) => {
   const schoolInfo = useSchoolInfo({usIp});
   const [name, setName] = useState('');
   const [nameErrorMessage, setNameErrorMessage] = useState(null);
+  const [educatorRole, setEducatorRole] = useState('');
   const [emailOptInChecked, setEmailOptInChecked] = useState(false);
   const [gdprChecked, setGdprChecked] = useState(false);
   const [showGDPR, setShowGDPR] = useState(false);
   const [isGdprLoaded, setIsGdprLoaded] = useState(false);
   const [userReturnTo, setUserReturnTo] = useState('/home');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorCreatingAccountMessage, showErrorCreatingAccountMessage] =
-    useState(false);
+  const [errorCreatingAccountMessage, setErrorCreatingAccountMessage] =
+    useState('');
 
-  const isInSchoolRequiredExperiment = statsigReporter.getIsInExperiment(
-    'require_school_in_signup_v1',
-    'requireInfo',
+  const showEducatorRole = statsigReporter.getIsInExperiment(
+    'educator_role',
+    'showEducatorRole',
+    false
+  );
+
+  const requireEducatorRole = statsigReporter.getIsInExperiment(
+    'educator_role',
+    'requireEducatorRole',
     false
   );
 
@@ -66,12 +93,12 @@ const FinishTeacherAccount: React.FunctionComponent<{
   useEffect(() => {
     // If the user hasn't selected a user type or login type, redirect them back to the incomplete step of signup.
     if (sessionStorage.getItem(ACCOUNT_TYPE_SESSION_KEY) === null) {
-      navigateToHref('/users/new_sign_up/account_type');
+      navigateToHref('/users/sign_up/account_type');
     } else if (
       sessionStorage.getItem(EMAIL_SESSION_KEY) === null &&
       sessionStorage.getItem(OAUTH_LOGIN_TYPE_SESSION_KEY) === null
     ) {
-      navigateToHref('/users/new_sign_up/login_type');
+      navigateToHref('/users/sign_up/login_type');
     }
 
     analyticsReporter.sendEvent(
@@ -99,11 +126,12 @@ const FinishTeacherAccount: React.FunctionComponent<{
     };
     fetchGdprData();
 
-    const userReturnToHref = sessionStorage.getItem(USER_RETURN_TO_SESSION_KEY);
+    const userReturnToHref =
+      sessionStorage.getItem(USER_RETURN_TO_SESSION_KEY) || redirectUrl;
     if (userReturnToHref) {
       setUserReturnTo(userReturnToHref);
     }
-  }, [countryCode, usIp]);
+  }, [countryCode, usIp, redirectUrl]);
 
   // GDPR is valid if
   // 1. The fetch call has completed AND
@@ -112,6 +140,16 @@ const FinishTeacherAccount: React.FunctionComponent<{
   const gdprValid = useMemo(() => {
     return isGdprLoaded && ((showGDPR && gdprChecked) || !showGDPR);
   }, [showGDPR, gdprChecked, isGdprLoaded]);
+
+  const formDisabled = useMemo(
+    () =>
+      name?.trim() === '' ||
+      name?.length > MAX_DISPLAY_NAME_LENGTH ||
+      !gdprValid ||
+      schoolInfoInvalid(schoolInfo) ||
+      (requireEducatorRole && !educatorRole),
+    [gdprValid, name, schoolInfo, requireEducatorRole, educatorRole]
+  );
 
   const onNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newName = e.target.value;
@@ -136,7 +174,7 @@ const FinishTeacherAccount: React.FunctionComponent<{
     }
     setIsSubmitting(true);
     sendFinishEvent();
-    showErrorCreatingAccountMessage(false);
+    setErrorCreatingAccountMessage('');
 
     const signUpParams = {
       new_sign_up: true,
@@ -145,8 +183,14 @@ const FinishTeacherAccount: React.FunctionComponent<{
         email: sessionStorage.getItem(EMAIL_SESSION_KEY),
         name: name,
         email_preference_opt_in: emailOptInChecked,
-        school_info_attributes: {...schoolInfo},
+        school_info_attributes: buildSchoolData({
+          schoolId: schoolInfo.schoolId,
+          country: schoolInfo.country,
+          schoolName: schoolInfo.schoolName,
+          schoolZip: schoolInfo.schoolZip,
+        }),
         country_code: countryCode,
+        educator_role: educatorRole || null,
       },
     };
     const authToken = await getAuthenticityToken();
@@ -163,8 +207,14 @@ const FinishTeacherAccount: React.FunctionComponent<{
       clearSignUpSessionStorage(true);
       navigateToHref(userReturnTo);
     } else {
+      if (response.status === 400) {
+        response
+          .json()
+          .then(badRequest => setErrorCreatingAccountMessage(badRequest.error));
+      } else {
+        setErrorCreatingAccountMessage(locale.error_signing_up_message());
+      }
       setIsSubmitting(false);
-      showErrorCreatingAccountMessage(true);
     }
   };
 
@@ -174,9 +224,16 @@ const FinishTeacherAccount: React.FunctionComponent<{
   };
 
   const sendFinishEvent = (): void => {
-    const hasSchool = !!document.querySelector(
-      'select[name="user[school_info_attributes][school_id]"]'
-    );
+    // Log to Statsig and Amplitude
+    const schoolData = buildSchoolData({
+      schoolId: schoolInfo.schoolId,
+      country: schoolInfo.country,
+      schoolName: schoolInfo.schoolName,
+      schoolZip: schoolInfo.schoolZip,
+    });
+    // schoolData would be undefined if not valid, and the only
+    // school_type sent is 'noSchoolSetting', which is not a school
+    const hasSchool = schoolData && !schoolData.school_type;
     analyticsReporter.sendEvent(
       EVENTS.SIGN_UP_FINISHED_EVENT,
       {
@@ -188,6 +245,11 @@ const FinishTeacherAccount: React.FunctionComponent<{
       },
       PLATFORMS.BOTH
     );
+
+    // Log to Google Analytics
+    trackEvent('sign_up', 'sign_up_success', {
+      value: 'teacher',
+    });
   };
 
   return (
@@ -204,12 +266,13 @@ const FinishTeacherAccount: React.FunctionComponent<{
                 iconName={'circle-xmark'}
                 className={style.xIcon}
               />
-              <BodyThreeText className={style.errorMessageText}>
-                <SafeMarkdown markdown={locale.error_signing_up_message()} />
-              </BodyThreeText>
+              <SafeMarkdown
+                markdown={errorCreatingAccountMessage}
+                className={style.errorMessageText}
+              />
             </div>
             <CloseButton
-              onClick={() => showErrorCreatingAccountMessage(false)}
+              onClick={() => setErrorCreatingAccountMessage('')}
               aria-label={locale.error_signing_up_message_aria_label()}
             />
           </div>
@@ -220,7 +283,6 @@ const FinishTeacherAccount: React.FunctionComponent<{
               name="displayName"
               id="uitest-display-name"
               label={locale.what_do_you_want_to_be_called()}
-              className={style.nameInput}
               value={name}
               placeholder={locale.msCoder()}
               onChange={onNameChange}
@@ -234,11 +296,22 @@ const FinishTeacherAccount: React.FunctionComponent<{
               </BodyThreeText>
             )}
           </div>
-          <SchoolDataInputs
-            {...schoolInfo}
-            includeHeaders={false}
-            markFieldsAsRequired={isInSchoolRequiredExperiment}
-          />
+          {showEducatorRole && (
+            <SimpleDropdown
+              className={classNames(style.dropdownContainer, {
+                [style.requiredLabel]: requireEducatorRole,
+              })}
+              labelText={locale.what_is_your_role()}
+              name="educator_role"
+              selectedValue={educatorRole}
+              onChange={e => {
+                setEducatorRole(e.target.value);
+              }}
+              itemGroups={roleItemGroups}
+              dropdownTextThickness="thin"
+            />
+          )}
+          <SchoolDataInputs {...schoolInfo} includeHeaders={false} />
           {showGDPR && (
             <div>
               <BodyThreeText
@@ -294,12 +367,7 @@ const FinishTeacherAccount: React.FunctionComponent<{
               iconStyle: 'solid',
               title: 'arrow-right',
             }}
-            disabled={
-              name?.trim() === '' ||
-              name?.length > MAX_DISPLAY_NAME_LENGTH ||
-              !gdprValid ||
-              (isInSchoolRequiredExperiment && schoolInfoInvalid(schoolInfo))
-            }
+            disabled={formDisabled}
             isPending={isSubmitting}
           />
         </div>
