@@ -208,6 +208,8 @@ class User < ApplicationRecord
     educator_role
     ai_differentiation_toggled_off
     has_completed_ai_differentiation_welcome
+    editor_font_size
+    console_font_size
   )
 
   attr_accessor(

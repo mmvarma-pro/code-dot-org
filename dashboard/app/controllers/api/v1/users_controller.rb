@@ -119,6 +119,16 @@ class Api::V1::UsersController < Api::V1::JSONApiController
     render json: {display_theme: @user&.display_theme}
   end
 
+  # GET /api/v1/users/<user_id>/editor_font_size
+  def get_editor_font_size
+    render json: {editor_font_size: @user&.editor_font_size}
+  end
+
+  # GET /api/v1/users/<user_id>/console_font_size
+  def get_console_font_size
+    render json: {console_font_size: @user&.console_font_size}
+  end
+
   # GET /api/v1/users/<user_id>/mute_music
   def get_mute_music
     render json: {mute_music: !!@user&.mute_music}
@@ -280,6 +290,22 @@ class Api::V1::UsersController < Api::V1::JSONApiController
     @user.save
 
     render json: {display_theme: @user.display_theme}
+  end
+
+  # POST /api/v1/users/<user_id>/editor_font_size
+  def update_editor_font_size
+    @user.editor_font_size = params[:editor_font_size]
+    @user.save
+
+    render json: {editor_font_size: @user.editor_font_size}
+  end
+
+  # POST /api/v1/users/<user_id>/console_font_size
+  def update_console_font_size
+    @user.console_font_size = params[:console_font_size]
+    @user.save
+
+    render json: {console_font_size: @user.console_font_size}
   end
 
   # POST /api/v1/users/<user_id>/ai_tutor_access

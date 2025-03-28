@@ -985,6 +985,8 @@ Dashboard::Application.routes.draw do
         concerns :section_api_routes
         post 'users/:user_id/using_text_mode', to: 'users#post_using_text_mode'
         post 'users/:user_id/display_theme', to: 'users#update_display_theme'
+        post 'users/:user_id/editor_font_size', to: 'users#update_editor_font_size'
+        post 'users/:user_id/console_font_size', to: 'users#update_console_font_size'
         post 'users/:user_id/mute_music', to: 'users#post_mute_music'
 
         post 'users/sort_by_family_name', to: 'users#post_sort_by_family_name'
@@ -1001,6 +1003,8 @@ Dashboard::Application.routes.draw do
 
         get 'users/:user_id/using_text_mode', to: 'users#get_using_text_mode'
         get 'users/:user_id/display_theme', to: 'users#get_display_theme'
+        get 'users/:user_id/editor_font_size', to: 'users#get_editor_font_size'
+        get 'users/:user_id/console_font_size', to: 'users#get_console_font_size'
         get 'users/:user_id/mute_music', to: 'users#get_mute_music'
         get 'users/:user_id/contact_details', to: 'users#get_contact_details'
         get 'users/current', to: 'users#current'
