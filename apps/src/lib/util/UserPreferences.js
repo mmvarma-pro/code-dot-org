@@ -40,6 +40,38 @@ export default class UserPreferences extends Record({userId: 'me'}) {
   }
 
   /**
+   * Save the user's editor font size selection
+   * @param {string} editorFontSize
+   */
+  setEditorFontSize(editorFontSize) {
+    return $.post(`/api/v1/users/${this.userId}/editor_font_size`, {
+      editor_font_size: editorFontSize,
+    });
+  }
+
+  getEditorFontSize(editorFontSize) {
+    return $.getJSON(`/api/v1/users/${this.userId}/editor_font_size`).then(
+      response => response.editor_font_size
+    );
+  }
+
+  /**
+   * Save the user's console font size selection
+   * @param {string} consoleFontSize
+   */
+  setConsoleFontSize(consoleFontSize) {
+    return $.post(`/api/v1/users/${this.userId}/console_font_size`, {
+      console_font_size: consoleFontSize,
+    });
+  }
+
+  getConsoleFontSize(editorFontSize) {
+    return $.getJSON(`/api/v1/users/${this.userId}/console_font_size`).then(
+      response => response.console_font_size
+    );
+  }
+
+  /**
    * Save the student list sorting preference
    * @param {boolean} sortByFamilyName: True if sorting by family name, false otherwise.
    */
