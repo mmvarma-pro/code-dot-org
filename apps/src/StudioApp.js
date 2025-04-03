@@ -2459,6 +2459,7 @@ StudioApp.prototype.handleEditCode_ = function (config) {
   const codeTextbox = document.getElementById('codeTextbox');
   const dropletCodeTextbox = document.createElement('div');
   dropletCodeTextbox.setAttribute('id', 'dropletCodeTextbox');
+  dropletCodeTextbox.classList.append('notranslate');
   codeTextbox.appendChild(dropletCodeTextbox);
 
   this.editor = new droplet.Editor(dropletCodeTextbox, {
