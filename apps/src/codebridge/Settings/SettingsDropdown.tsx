@@ -99,10 +99,14 @@ const SettingsDropdown: React.FunctionComponent<SettingsDropdownProps> = ({
     if (selectedKey !== currentKey && FontSize[selectedKey]) {
       if (signInState === SignInState.SignedIn) {
         trySetSessionStorage(`${appName}${type}FontSizeKey`, selectedKey);
+        const field = type === 'Console' ? 'consoleFontSize' : 'editorFontSize';
         const body = {
+          [field]: {
+            [appName]: selectedKey,
+          },
+        };
 
-        }
-        HttpClient.put('/user_preference', body, true, {
+        HttpClient.put('/user_preference', JSON.stringify(body), true, {
           'Content-Type': 'application/json',
         });
       }

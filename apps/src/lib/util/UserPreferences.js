@@ -106,7 +106,7 @@ export default class UserPreferences extends Record({userId: 'me'}) {
    */
   async getEditorFontSize(appType) {
     const editorFontSizeResponse = await HttpClient.fetchJson(
-      `/user_prefences/font_sizes/editor`
+      '/user_preferences/font_sizes/editor'
     );
     const editorFontSize = editorFontSizeResponse.value.appType;
     return editorFontSize;
