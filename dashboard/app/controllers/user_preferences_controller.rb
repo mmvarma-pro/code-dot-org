@@ -20,6 +20,26 @@ class UserPreferencesController < ApplicationController
     )
   end
 
+  def console_font_size
+    preference = UserPreference.find_by(user_id: current_user.id)
+
+    if preference && preference.console_font_size.present?
+      render json: {console_font_size: preference.console_font_size}
+    else
+      render json: {}, status: :not_found
+    end
+  end
+
+  def editor_font_size
+    preference = UserPreference.find_by(user_id: current_user.id)
+
+    if preference && preference.editor_font_size.present?
+      render json: {editor_font_size: preference.editor_font_size}
+    else
+      render json: {}, status: :not_found
+    end
+  end
+
   private def update_params
     params.transform_keys(&:underscore).permit(
       section_order: [],

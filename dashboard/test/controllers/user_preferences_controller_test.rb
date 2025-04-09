@@ -93,4 +93,40 @@ class UserPreferencesControllerTest < ActionController::TestCase
     assert_equal section_order, preference.section_order
     assert_nil preference.attributes['unpermitted_param']
   end
+
+  test 'gets console_font_size for the current user' do
+    font_size = {'pythonlab' => 'large'}
+    UserPreference.create!(user_id: @user.id, console_font_size: font_size)
+
+    get :console_font_size
+
+    assert_response :success
+    assert_equal font_size, JSON.parse(response.body)['console_font_size']
+  end
+
+  test 'returns 404 if no console_font_size exists for the current user' do
+    UserPreference.create!(user_id: @user.id, console_font_size: nil)
+
+    get :console_font_size
+
+    assert_response :not_found
+  end
+
+  test 'gets editor_font_size for the current user' do
+    font_size = {'weblab2' => 'small'}
+    UserPreference.create!(user_id: @user.id, editor_font_size: font_size)
+
+    get :editor_font_size
+
+    assert_response :success
+    assert_equal font_size, JSON.parse(response.body)['editor_font_size']
+  end
+
+  test 'returns 404 if no editor_font_size exists for the current user' do
+    UserPreference.create!(user_id: @user.id, editor_font_size: nil)
+
+    get :editor_font_size
+
+    assert_response :not_found
+  end
 end
