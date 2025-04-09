@@ -1,6 +1,7 @@
 import {Record} from 'immutable';
 import $ from 'jquery';
 
+import HttpClient from '@cdo/apps/util/HttpClient';
 export default class UserPreferences extends Record({userId: 'me'}) {
   /**
    * Save the using_text_mode user preference
@@ -89,5 +90,25 @@ export default class UserPreferences extends Record({userId: 'me'}) {
     return $.getJSON(`/api/v1/users/${this.userId}/mute_music`).then(
       response => response.mute_music
     );
+  }
+
+  /**
+   * Save the user's editor font size selection
+   * @param {string} editorFontSize
+   * @param {string} appType
+   */
+  setEditorFontSize(appType, editorFontSize) {}
+
+  /**
+   * Fetch the user's editor font size selection
+   * @param {string} editorFontSize
+   * @param {string} appType
+   */
+  async getEditorFontSize(appType) {
+    const editorFontSizeResponse = await HttpClient.fetchJson(
+      `/user_prefences/font_sizes/editor`
+    );
+    const editorFontSize = editorFontSizeResponse.value.appType;
+    return editorFontSize;
   }
 }

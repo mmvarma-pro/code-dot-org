@@ -9,6 +9,7 @@ import {FontSize} from '@cdo/apps/lab2/constants';
 import {isReadOnlyWorkspace} from '@cdo/apps/lab2/lab2Redux';
 import {setEditorFontSize} from '@cdo/apps/lab2/redux/lab2ViewRedux';
 import {AppName} from '@cdo/apps/lab2/types';
+import UserPreferences from '@cdo/apps/lib/util/UserPreferences';
 import i18n from '@cdo/apps/pythonlab/locale';
 import {SignInState} from '@cdo/apps/templates/currentUserRedux';
 import {useAppSelector} from '@cdo/apps/util/reduxHooks';
@@ -51,6 +52,10 @@ const CodeEditor: React.FunctionComponent<CodeEditorProps> = ({
   useEffect(() => {
     const sessionStorageKey = `${appName}CodeEditorFontSizeKey`;
     const sessionStorage = tryGetSessionStorage(sessionStorageKey, false);
+    const savedEditorFontSize = new UserPreferences().getEditorFontSize(
+      appName
+    );
+    console.log('savedEditorFontSize', savedEditorFontSize);
     if (
       sessionStorage &&
       sessionStorage !== fontSizeKey &&

@@ -20,6 +20,7 @@ import {
 import {EVENTS} from '@cdo/apps/metrics/AnalyticsConstants';
 import {SignInState} from '@cdo/apps/templates/currentUserRedux';
 import useOutsideClick from '@cdo/apps/util/hooks/useOutsideClick';
+import HttpClient from '@cdo/apps/util/HttpClient';
 import {useAppSelector, useAppDispatch} from '@cdo/apps/util/reduxHooks';
 import {trySetSessionStorage} from '@cdo/apps/utils';
 import commonI18n from '@cdo/locale';
@@ -98,6 +99,12 @@ const SettingsDropdown: React.FunctionComponent<SettingsDropdownProps> = ({
     if (selectedKey !== currentKey && FontSize[selectedKey]) {
       if (signInState === SignInState.SignedIn) {
         trySetSessionStorage(`${appName}${type}FontSizeKey`, selectedKey);
+        const body = {
+
+        }
+        HttpClient.put('/user_preference', body, true, {
+          'Content-Type': 'application/json',
+        });
       }
       const reduxAction =
         type === 'Console' ? setConsoleFontSize : setEditorFontSize;
