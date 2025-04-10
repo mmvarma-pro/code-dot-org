@@ -38,6 +38,7 @@ const CodeEditor: React.FunctionComponent<CodeEditorProps> = ({
   const dispatch = useDispatch();
   const [didInit, setDidInit] = useState(false);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
+  const [fontSizeLoaded, setFontSizeLoaded] = useState(false);
   const channelId = useAppSelector(state => state.lab.channel?.id);
   const isReadOnly = useAppSelector(isReadOnlyWorkspace);
   const fontSizeKey = useAppSelector(state => state.lab2View.editorFontSizeKey);
@@ -49,19 +50,20 @@ const CodeEditor: React.FunctionComponent<CodeEditorProps> = ({
   // is updated and saved on the backend.
   useEffect(() => {
     const fetchFontSize = async () => {
+      if (signInState !== SignInState.SignedIn) {
+        setFontSizeLoaded(true);
+        return;
+      }
       const savedEditorFontSize = await new UserPreferences().getEditorFontSize(
         appName
       );
-      if (
-        savedEditorFontSize &&
-        savedEditorFontSize !== fontSizeKey &&
-        signInState === SignInState.SignedIn
-      )
+      if (savedEditorFontSize) {
         dispatch(setEditorFontSize(savedEditorFontSize));
+      }
+      setFontSizeLoaded(true);
     };
 
     fetchFontSize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, signInState, appName]);
 
   // These two compartments control read-only settings.
@@ -81,7 +83,7 @@ const CodeEditor: React.FunctionComponent<CodeEditorProps> = ({
     });
   };
   useEffect(() => {
-    if (editorRef.current === null || didInit) {
+    if (!fontSizeLoaded || editorRef.current === null || didInit) {
       return;
     }
 
@@ -135,6 +137,7 @@ const CodeEditor: React.FunctionComponent<CodeEditorProps> = ({
     editorEditableCompartment,
     fontSizeCompartment,
     fontSizeKey,
+    fontSizeLoaded,
   ]);
 
   // When we have a new fontSizeKey, reset font size.
@@ -191,6 +194,10 @@ const CodeEditor: React.FunctionComponent<CodeEditorProps> = ({
       cmContentDiv.setAttribute('aria-label', i18n.codeEditor());
     }
   }, []);
+
+  if (!fontSizeLoaded) {
+    return null;
+  }
 
   return (
     <div
