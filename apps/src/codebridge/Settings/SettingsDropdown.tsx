@@ -17,10 +17,10 @@ import {
   setConsoleFontSize,
   setEditorFontSize,
 } from '@cdo/apps/lab2/redux/lab2ViewRedux';
+import UserPreferences from '@cdo/apps/lib/util/UserPreferences';
 import {EVENTS} from '@cdo/apps/metrics/AnalyticsConstants';
 import {SignInState} from '@cdo/apps/templates/currentUserRedux';
 import useOutsideClick from '@cdo/apps/util/hooks/useOutsideClick';
-import HttpClient from '@cdo/apps/util/HttpClient';
 import {useAppSelector, useAppDispatch} from '@cdo/apps/util/reduxHooks';
 import commonI18n from '@cdo/locale';
 
@@ -98,15 +98,7 @@ const SettingsDropdown: React.FunctionComponent<SettingsDropdownProps> = ({
     if (selectedKey !== currentKey && FontSize[selectedKey]) {
       if (signInState === SignInState.SignedIn) {
         const field = type === 'Console' ? 'consoleFontSize' : 'editorFontSize';
-        const body = {
-          [field]: {
-            [appName]: selectedKey,
-          },
-        };
-
-        HttpClient.put('/user_preference', JSON.stringify(body), true, {
-          'Content-Type': 'application/json',
-        });
+        new UserPreferences().setFontSize(selectedKey, appName, field);
       }
       const reduxAction =
         type === 'Console' ? setConsoleFontSize : setEditorFontSize;

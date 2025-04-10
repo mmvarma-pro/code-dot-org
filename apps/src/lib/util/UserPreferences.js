@@ -93,11 +93,36 @@ export default class UserPreferences extends Record({userId: 'me'}) {
   }
 
   /**
-   * Save the user's editor font size selection
-   * @param {string} editorFontSize
+   * Save the user's console font size selection
+   * @param {string} fontSize
+   * @param {string} appName
+   * @param {string} field either 'consoleFontSize' or 'editorFontSize'
+   */
+  setFontSize(fontSize, appName, field) {
+    const body = {
+      [field]: {
+        [appName]: fontSize,
+      },
+    };
+
+    HttpClient.put('/user_preference', JSON.stringify(body), true, {
+      'Content-Type': 'application/json',
+    });
+  }
+
+  /**
+   * Fetch the user's editor font size selection
+   * @param {string} fontSize
    * @param {string} appType
    */
-  setEditorFontSize(appType, editorFontSize) {}
+  async getConsoleFontSize(appName) {
+    const consoleFontSizeResponse = await HttpClient.fetchJson(
+      '/user_preference/font_size/console'
+    );
+    const consoleFontSize =
+      consoleFontSizeResponse.value.console_font_size[appName];
+    return consoleFontSize;
+  }
 
   /**
    * Fetch the user's editor font size selection
@@ -106,7 +131,7 @@ export default class UserPreferences extends Record({userId: 'me'}) {
    */
   async getEditorFontSize(appName) {
     const editorFontSizeResponse = await HttpClient.fetchJson(
-      '/user_preferences/font_sizes/editor'
+      '/user_preference/font_size/editor'
     );
     const editorFontSize =
       editorFontSizeResponse.value.editor_font_size[appName];
