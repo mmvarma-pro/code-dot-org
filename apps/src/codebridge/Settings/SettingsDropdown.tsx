@@ -22,7 +22,6 @@ import {SignInState} from '@cdo/apps/templates/currentUserRedux';
 import useOutsideClick from '@cdo/apps/util/hooks/useOutsideClick';
 import HttpClient from '@cdo/apps/util/HttpClient';
 import {useAppSelector, useAppDispatch} from '@cdo/apps/util/reduxHooks';
-import {trySetSessionStorage} from '@cdo/apps/utils';
 import commonI18n from '@cdo/locale';
 
 import {useCodebridgeContext} from '../codebridgeContext';
@@ -98,7 +97,6 @@ const SettingsDropdown: React.FunctionComponent<SettingsDropdownProps> = ({
   ) => {
     if (selectedKey !== currentKey && FontSize[selectedKey]) {
       if (signInState === SignInState.SignedIn) {
-        trySetSessionStorage(`${appName}${type}FontSizeKey`, selectedKey);
         const field = type === 'Console' ? 'consoleFontSize' : 'editorFontSize';
         const body = {
           [field]: {
