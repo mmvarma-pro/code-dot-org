@@ -1,0 +1,32 @@
+# Marketing Root DNS Resources
+# This template is manually deployed to create/update the Marketing App's AWS resources.
+
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Marketing App Root DNS AWS resources
+
+Parameters:
+  SubDomainName:
+    Type: String
+    Description: Subdomain name (e.g. 'marketing' in 'marketing.code.org').
+  BaseDomainName:
+    Type: String
+    Description: Base domain name (e.g. 'code.org' in 'marketing.code.org').
+
+Resources:
+   RootHostedZone:
+     Type: AWS::Route53::HostedZone
+     Properties:
+       Name: !Sub "${SubDomainName}.${BaseDomainName}."
+
+Outputs:
+  RootHostedZoneId:
+    Value: !Ref RootHostedZone
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-RootHostedZoneId'
+  RootHostedZoneAddress:
+    Value: !Sub "${SubDomainName}.${BaseDomainName}"
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-RootHostedZoneAddress'

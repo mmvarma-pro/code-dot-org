@@ -1,20 +1,25 @@
 #!/usr/bin/env ruby
 require_relative './config'
 
-if ARGV.empty?
-  puts "Usage: ./deploy.rb <template-name>"
-  exit 1
-end
+require 'optparse'
 
-template_name = ARGV[0]
-template_file = "#{template_name}.yml.erb"
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: ./deploy.rb <template-name> --region <aws region>"
+  opts.on('--region REGION', 'Specify the AWS region') do |region|
+    options[:region] = region
+  end
+end.parse!
 
-unless File.exist?(template_file)
-  puts "Error: Template file '#{template_file}' not found."
+template_name = ARGV.shift
+
+unless options.key?(:region)
+  print "Missing --region option. Please specify the AWS region."
   exit 1
 end
 
 puts "\nTransforming ERB to YAML for template '#{template_name}'..."
+`erb aws_region=#{options[:region]} -T - -r ./config.rb  #{template_file}.erb > #{template_name}.yml `
 `erb -T - -r ./config.rb #{template_file} > #{template_name}.yml`
 if $?&.exitstatus == 0
   puts "Success!"

@@ -6,44 +6,21 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Marketing App AWS resources
 
 Parameters:
-  BaseDomainName:
+  MarketingRootDnsStackName:
     Type: String
-    Description: Base domain name (e.g. 'code.org' in 'marketing.code.org').
+    Description: The name of the Marketing root DNS stack to use for this deployment.
   SubdomainName:
     Type: String
-    Description: Subdomain name for marketing (e.g. 'marketing' in 'marketing.code.org').
-  Environment:
-    Type: String
-    Default: "test"
-    Description: "Environment being deployed to (production or test)"
+    Description: Subdomain name for marketing (e.g. 'test' in 'test.marketing.code.org').
   ContainerImageHashDigest:
     Type: String
     Description: "The sha256sum of the marketing container image."
 
-Conditions:
-  IsDevCondition: !Equals [!Ref BaseDomainName, "dev-code.org"]
 Resources:
-  # Route 53 root hosted zone for marketing.dev-code.org
-  RootHostedZone:
-    Type: AWS::Route53::HostedZone
-    Properties:
-      Name: marketing.dev-code.org.
-
-  # TLS Cert for the ECS ALB
-  TLSCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: dev.marketing.dev-code.org
-      DomainValidationOptions:
-        - DomainName: dev.marketing.dev-code.org
-          HostedZoneId:
-            Ref: RootHostedZone
-      ValidationMethod: DNS
-
   ###########################
   # Start AWS VPC Resources #
   ###########################
-  
+
   # VPC for ECS and ALB
   Vpc:
     Type: AWS::EC2::VPC
@@ -53,44 +30,16 @@ Resources:
       EnableDnsSupport: true
       InstanceTenancy: default
 
-  VpcPublicSubnet0:
+<% Config::REGIONS[aws_region.to_sym][:vpc][:public_subnets].each_with_index do |subnet, index| %>
+  VpcPublicSubnet<%= index %>:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: us-west-2a
-      CidrBlock: 10.0.0.0/18
+      AvailabilityZone: <%= subnet[:availability_zone] %>
+      CidrBlock: <%= subnet[:cidr_block] %>
       MapPublicIpOnLaunch: true
       VpcId:
         Ref: Vpc
 
-  VpcPublicSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: us-west-2b
-      CidrBlock: 10.0.64.0/18
-      MapPublicIpOnLaunch: true
-      VpcId:
-        Ref: Vpc
-
-  VpcPrivateSubnet0:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: us-west-2a
-      CidrBlock: 10.0.128.0/18
-      MapPublicIpOnLaunch: false
-      VpcId:
-        Ref: Vpc
-
-  VpcPrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: us-west-2b
-      CidrBlock: 10.0.192.0/18
-      MapPublicIpOnLaunch: false
-      VpcId:
-        Ref: Vpc
-
-<% Config::AVAILABILITY_ZONES.each_with_index do |region, index| %>
-  # Route Table for Public Subnet <%= region %>
   VpcPublicSubnet<%= index %>RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -159,6 +108,17 @@ Resources:
         Ref: VpcPrivateSubnet<%= index %>RouteTable
 <% end %>
 
+<% Config::REGIONS[aws_region.to_sym][:vpc][:private_subnets].each_with_index do |subnet, index| %>
+  VpcPrivateSubnet<%= index %>:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: <%= subnet[:availability_zone] %>
+      CidrBlock: <%= subnet[:cidr_block] %>
+      MapPublicIpOnLaunch: false
+      VpcId:
+        Ref: Vpc
+<% end %>
+
   VpcIGW:
     Type: AWS::EC2::InternetGateway
 
@@ -170,13 +130,31 @@ Resources:
       VpcId:
         Ref: Vpc
 
-  ###########################
-  # End AWS VPC Resources   #
-  ###########################
+  #########################
+  # End AWS VPC Resources #
+  #########################
 
   ###########################
   # Start AWS ECS Resources #
   ###########################
+
+  # TLS Cert for the ECS ALB
+  TLSCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub
+        - "${SubdomainName}.${RootDomainName}"
+        - RootDomainName:
+            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+      DomainValidationOptions:
+        - DomainName: !Sub
+          - "${SubdomainName}.${RootDomainName}"
+          - RootDomainName:
+              Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+          HostedZoneId:
+            Fn::ImportValue: !Sub '${MarketingRootDnsStackName}-RootHostedZoneId'
+      ValidationMethod: DNS
+
   EcsCluster:
     Type: AWS::ECS::Cluster
 
@@ -193,14 +171,10 @@ Resources:
             - FargateServiceLBSecurityGroup
             - GroupId
       Subnets:
-        - Ref: VpcPublicSubnet0
-        - Ref: VpcPublicSubnet1
+<% Config::REGIONS[aws_region.to_sym][:vpc][:public_subnets].each_with_index do |_, index| %>
+        - Ref: VpcPublicSubnet<%= index %>
+<% end %>
       Type: application
-    DependsOn:
-      - VpcPublicSubnet0DefaultRoute
-      - VpcPublicSubnet0RouteTableAssociation
-      - VpcPublicSubnet1DefaultRoute
-      - VpcPublicSubnet1RouteTableAssociation
 
   FargateServiceLBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -274,8 +248,11 @@ Resources:
             - FargateServiceLB
             - CanonicalHostedZoneID
       HostedZoneId:
-        Ref: RootHostedZone
-      Name: dev.marketing.dev-code.org.
+        Fn::ImportValue: !Sub '${MarketingRootDnsStackName}-RootHostedZoneId'
+      Name: !Sub
+        - "${SubdomainName}.${RootDomainName}"
+        - RootDomainName:
+            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
       Type: A
 
   FargateServiceTaskDefTaskRole:
@@ -337,7 +314,7 @@ Resources:
         Fn::GetAtt:
           - FargateServiceTaskDefExecutionRole
           - Arn
-      Family: MarketingStackStagingFargateServiceTaskDef
+      Family: !Sub "${AWS::StackName}-FargateServiceTaskDef"
       Memory: "512"
       NetworkMode: awsvpc
       RequiresCompatibilities:
@@ -406,8 +383,9 @@ Resources:
                 - FargateServiceSecurityGroup
                 - GroupId
           Subnets:
-            - Ref: VpcPrivateSubnet0
-            - Ref: VpcPrivateSubnet1
+<% Config::REGIONS[aws_region.to_sym][:vpc][:private_subnets].each_with_index do |_, index| %>
+            - Ref: VpcPrivateSubnet<%= index %>
+<% end %>
       TaskDefinition:
         Ref: FargateServiceTaskDef
     DependsOn:
@@ -446,8 +424,33 @@ Resources:
     DependsOn:
       - FargateServiceTaskDefTaskRole
 
+  MarketingStaticAssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+        - "${SubdomainName}.${RootDomainName}-static-assets"
+        - RootDomainName:
+            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: "AES256"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 90
+
   ###########################
-  # End AWS VPC Resources   #
+  # End AWS ECS Resources   #
   ###########################
 
   ###########################
@@ -466,8 +469,7 @@ Resources:
         - Key: Name
           Value: Marketing-EFS-Cache
 
-<% Config::AVAILABILITY_ZONES.each_with_index do |region, index| %>
-  # Mount Target for <%= region  %>
+<% Config::REGIONS[aws_region.to_sym][:vpc][:private_subnets].each_with_index do |_, index| %>
   MarketingCacheMountTarget<%= index %>:
     Type: AWS::EFS::MountTarget
     Properties:
@@ -500,7 +502,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 2049
           ToPort: 2049
-          SourceSecurityGroupId:         
+          SourceSecurityGroupId:
             Fn::GetAtt:
               - FargateServiceSecurityGroup
               - GroupId
@@ -509,14 +511,17 @@ Resources:
   # End AWS EFS Resources   #
   ###########################
 
-  ###########################
-  # Start AWS ECS Resources #
-  ###########################
+  ##########################################
+  # Start Github Action Deployer Resources #
+  ##########################################
 
   MarketingGithubDeployerUser:
     Type: AWS::IAM::User
     Properties:
-      UserName: marketing-github-deployer-development-cfn
+      UserName: !Sub
+        - "github-deployer-${SubdomainName}.${RootDomainName}"
+        - RootDomainName:
+            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
 
   MarketingGithubDeployerUserPolicy:
     Type: 'AWS::IAM::Policy'
@@ -555,7 +560,7 @@ Resources:
           - Effect: Allow
             Action:
               - 'ecs:RegisterTaskDefinition'
-            Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/MarketingStackStagingFargateServiceTaskDef:*"
+            Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${AWS::StackName}-FargateServiceTaskDef:*"
           - Effect: Allow
             Action:
               - 'ecs:DeregisterTaskDefinition'
@@ -600,28 +605,6 @@ Resources:
             - '"}'
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
-
-  MarketingStaticAssetsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !If [IsDevCondition, !Sub "cdo-dev-${SubdomainName}-static-assets", !Sub "cdo-${SubdomainName}-static-assets"]
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: "AES256"
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      VersioningConfiguration:
-        Status: Enabled
-      LifecycleConfiguration:
-        Rules:
-          - Id: ExpireOldVersions
-            Status: Enabled
-            NoncurrentVersionExpiration:
-              NoncurrentDays: 90
 
 Outputs:
   FargateServiceLoadBalancerDNS:
