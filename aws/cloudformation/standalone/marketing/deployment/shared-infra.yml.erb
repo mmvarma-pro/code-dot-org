@@ -9,15 +9,15 @@ Parameters:
   SubDomainName:
     Type: String
     Description: Subdomain name (e.g. 'marketing' in 'marketing.code.org').
-  BaseDomainName:
+  RootDomainName:
     Type: String
-    Description: Base domain name (e.g. 'code.org' in 'marketing.code.org').
+    Description: Root domain name (e.g. 'code.org' in 'marketing.code.org').
 
 Resources:
    RootHostedZone:
      Type: AWS::Route53::HostedZone
      Properties:
-       Name: !Sub "${SubDomainName}.${BaseDomainName}."
+       Name: !Sub "${SubDomainName}.${RootDomainName}."
 
 Outputs:
   RootHostedZoneId:
@@ -26,7 +26,7 @@ Outputs:
       Name:
         'Fn::Sub': '${AWS::StackName}-RootHostedZoneId'
   RootHostedZoneAddress:
-    Value: !Sub "${SubDomainName}.${BaseDomainName}"
+    Value: !Sub "${SubDomainName}.${RootDomainName}"
     Export:
       Name:
         'Fn::Sub': '${AWS::StackName}-RootHostedZoneAddress'

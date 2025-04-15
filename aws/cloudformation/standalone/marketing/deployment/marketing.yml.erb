@@ -6,9 +6,12 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Marketing App AWS resources
 
 Parameters:
-  MarketingRootDnsStackName:
+  BaseHostedZoneId:
     Type: String
-    Description: The name of the Marketing root DNS stack to use for this deployment.
+    Description: The ID of the Route53 hosted zone for the marketing app. (e.g. the hosted zone id for 'marketing.code.org')
+  BaseDomainName:
+    Type: String
+    Description: The base domain name (e.g. 'marketing.code.org' in 'test.marketing.code.org').
   SubdomainName:
     Type: String
     Description: Subdomain name for marketing (e.g. 'test' in 'test.marketing.code.org').
@@ -142,17 +145,11 @@ Resources:
   TLSCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: !Sub
-        - "${SubdomainName}.${RootDomainName}"
-        - RootDomainName:
-            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+      DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
       DomainValidationOptions:
-        - DomainName: !Sub
-          - "${SubdomainName}.${RootDomainName}"
-          - RootDomainName:
-              Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+        - DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
           HostedZoneId:
-            Fn::ImportValue: !Sub '${MarketingRootDnsStackName}-RootHostedZoneId'
+            Ref: BaseHostedZoneId
       ValidationMethod: DNS
 
   EcsCluster:
@@ -248,11 +245,8 @@ Resources:
             - FargateServiceLB
             - CanonicalHostedZoneID
       HostedZoneId:
-        Fn::ImportValue: !Sub '${MarketingRootDnsStackName}-RootHostedZoneId'
-      Name: !Sub
-        - "${SubdomainName}.${RootDomainName}"
-        - RootDomainName:
-            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+        Ref: BaseHostedZoneId
+      Name: !Sub "${SubdomainName}.${BaseDomainName}"
       Type: A
 
   FargateServiceTaskDefTaskRole:
@@ -427,10 +421,7 @@ Resources:
   MarketingStaticAssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub
-        - "${SubdomainName}.${RootDomainName}-static-assets"
-        - RootDomainName:
-            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+      BucketName: !Sub "${SubdomainName}.${BaseDomainName}-static-assets"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -518,10 +509,7 @@ Resources:
   MarketingGithubDeployerUser:
     Type: AWS::IAM::User
     Properties:
-      UserName: !Sub
-        - "github-deployer-${SubdomainName}.${RootDomainName}"
-        - RootDomainName:
-            Fn::ImportValue: !Sub "${MarketingRootDnsStackName}-RootHostedZoneAddress"
+      UserName: !Sub "github-deployer-${SubdomainName}.${BaseDomainName}"
 
   MarketingGithubDeployerUserPolicy:
     Type: 'AWS::IAM::Policy'
@@ -607,11 +595,47 @@ Resources:
     DeletionPolicy: Delete
 
 Outputs:
+  FargateServiceTaskDefExecutionRoleArn:
+    Value:
+      Fn::GetAtt:
+        - FargateServiceTaskDefExecutionRole
+        - Arn
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-FargateServiceTaskDefExecutionRoleArn'
+  FargateServiceTaskDefTaskRoleArn:
+    Value:
+      Fn::GetAtt:
+        - FargateServiceTaskDefTaskRole
+        - Arn
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-FargateServiceTaskDefTaskRoleArn'
+  FargateServiceArn:
+    Value:
+      Ref: FargateService
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-FargateServiceArn'
+  MarketingStaticAssetsBucketArn:
+    Value:
+      Fn::GetAtt:
+        - MarketingStaticAssetsBucket
+        - Arn
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-MarketingStaticAssetsBucketArn'
   FargateServiceLoadBalancerDNS:
     Value:
       Fn::GetAtt:
         - FargateServiceLB
         - DNSName
+  FargateServiceDNS:
+    Value:
+      Ref: FargateServiceDNS
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-FargateServiceDNS'
   FargateServiceServiceURL:
     Value:
       Fn::Join:
