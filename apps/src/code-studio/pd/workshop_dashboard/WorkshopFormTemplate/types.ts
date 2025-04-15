@@ -114,7 +114,6 @@ export interface Workshop {
   course_offerings?: number[];
   participant_group_type?: string;
   time_zone?: string;
-  legacy?: boolean;
 }
 
 export interface WorkshopRequest
@@ -122,6 +121,8 @@ export interface WorkshopRequest
   id?: number;
   facilitators: number[];
   organizer?: number;
+  // TODO: ACQ-3081 remove legacy flag
+  legacy?: boolean | null;
 }
 
 export interface CourseOffering {
