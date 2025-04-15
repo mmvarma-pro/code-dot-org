@@ -76,6 +76,7 @@ export const workshopStateToApi = (
   course_offerings: workshop.courseOfferings.map(offering => Number(offering)),
   participant_group_type: workshop.participantGroupType,
   time_zone: workshop.timeZone,
+  legacy: false,
 });
 
 export const sessionStateToApi = (
