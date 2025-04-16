@@ -6,32 +6,23 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Marketing App AWS resources
 
 Parameters:
-  MarketingVpcStackName:
-    Type: String
-    Description: The name of the VPC stack to use for this deployment.
-  MarketingRootDnsStackName:
-    Type: String
-    Description: The name of the Marketing root DNS stack to use for this deployment.
   MarketingApplicationStackName:
     Type: String
     Description: The name of the Marketing application stack to use for this deployment.
 
 Resources:
-  MarketingGithubDeployerUser:
+  GithubDeployerUser:
     Type: AWS::IAM::User
     Properties:
-      UserName: !Sub
-        - "marketing-${FargateServiceAddress}-github-deployer"
-        - FargateServiceAddress:
-            Fn::ImportValue: !Sub "${MarketingApplicationStackName}-FargateServiceDNS"
+      UserName: !Sub "marketing-${MarketingApplicationStackName}-github-deployer"
 
-  MarketingGithubDeployerUserPolicy:
+  GithubDeployerUserPolicy:
     Type: 'AWS::IAM::Policy'
     Version: '2012-10-17'
     Properties:
-      PolicyName: MarketingGithubDeployerUserIamUserPolicy
+      PolicyName: GithubDeployerUserIamUserPolicy
       Users:
-        - Ref: MarketingGithubDeployerUser
+        - Ref: GithubDeployerUser
       PolicyDocument:
         Statement:
           - Effect: Allow
@@ -80,29 +71,29 @@ Resources:
               - "s3:PutObject"
               - "s3:ListBucket"
             Resource:
-              - Fn::ImportValue: !Sub "${MarketingApplicationStackName}-MarketingStaticAssetsBucketArn"
+              - Fn::ImportValue: !Sub "${MarketingApplicationStackName}-StaticAssetsBucketArn"
               - !Sub
-                - "${MarketingStaticAssetsBucketArn}/*"
-                - MarketingStaticAssetsBucketArn:
-                    Fn::ImportValue: !Sub "${MarketingApplicationStackName}-MarketingStaticAssetsBucketArn"
+                - "${StaticAssetsBucketArn}/*"
+                - StaticAssetsBucketArn:
+                    Fn::ImportValue: !Sub "${MarketingApplicationStackName}-StaticAssetsBucketArn"
 
-  MarketingGithubDeployerAccessKey:
+  GithubDeployerAccessKey:
     Type: AWS::IAM::AccessKey
     Properties:
       UserName:
-        Ref: MarketingGithubDeployerUser
+        Ref: GithubDeployerUser
 
-  MarketingGithubDeployerAccessKeySecret:
+  GithubDeployerAccessKeySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
       SecretString:
         Fn::Join:
           - ""
           - - '{"accessKeyId":"'
-            - Ref: MarketingGithubDeployerAccessKey
+            - Ref: GithubDeployerAccessKey
             - '","secretAccessKey":"'
             - Fn::GetAtt:
-                - MarketingGithubDeployerAccessKey
+                - GithubDeployerAccessKey
                 - SecretAccessKey
             - '"}'
     UpdateReplacePolicy: Delete

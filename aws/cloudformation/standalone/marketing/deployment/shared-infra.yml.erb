@@ -18,6 +18,7 @@ Resources:
      Type: AWS::Route53::HostedZone
      Properties:
        Name: !Sub "${SubDomainName}.${RootDomainName}."
+       Comment: 'Private root delegation hosted zone for the marketing app'
 
 Outputs:
   RootHostedZoneId:

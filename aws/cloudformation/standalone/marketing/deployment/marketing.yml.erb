@@ -141,17 +141,6 @@ Resources:
   # Start AWS ECS Resources #
   ###########################
 
-  # TLS Cert for the ECS ALB
-  TLSCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
-      DomainValidationOptions:
-        - DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
-          HostedZoneId:
-            Ref: BaseHostedZoneId
-      ValidationMethod: DNS
-
   EcsCluster:
     Type: AWS::ECS::Cluster
 
@@ -168,8 +157,8 @@ Resources:
             - FargateServiceLBSecurityGroup
             - GroupId
       Subnets:
-<% Config::REGIONS[aws_region.to_sym][:vpc][:public_subnets].each_with_index do |_, index| %>
-        - Ref: VpcPublicSubnet<%= index %>
+<% Config::REGIONS[aws_region.to_sym][:vpc][:private_subnets].each_with_index do |_, index| %>
+        - Ref: VpcPrivateSubnet<%= index %>
 <% end %>
       Type: application
 
@@ -179,10 +168,10 @@ Resources:
       GroupDescription: Security Group for ELB MarketingStackStagingFargateService
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
-          Description: Allow from anyone on port 443
-          FromPort: 443
+          Description: Allow from anyone on port 80
+          FromPort: 80
           IpProtocol: tcp
-          ToPort: 443
+          ToPort: 80
       VpcId:
         Ref: Vpc
 
@@ -205,17 +194,14 @@ Resources:
   FargateServiceLBPublicListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      Certificates:
-        - CertificateArn:
-            Ref: TLSCertificate
       DefaultActions:
         - TargetGroupArn:
             Ref: FargateServiceLBPublicListenerECSGroup
           Type: forward
       LoadBalancerArn:
         Ref: FargateServiceLB
-      Port: 443
-      Protocol: HTTPS
+      Port: 80
+      Protocol: HTTP
 
   FargateServiceLBPublicListenerECSGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -228,26 +214,6 @@ Resources:
       TargetType: ip
       VpcId:
         Ref: Vpc
-
-  FargateServiceDNS:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      AliasTarget:
-        DNSName:
-          Fn::Join:
-            - ""
-            - - dualstack.
-              - Fn::GetAtt:
-                  - FargateServiceLB
-                  - DNSName
-        HostedZoneId:
-          Fn::GetAtt:
-            - FargateServiceLB
-            - CanonicalHostedZoneID
-      HostedZoneId:
-        Ref: BaseHostedZoneId
-      Name: !Sub "${SubdomainName}.${BaseDomainName}"
-      Type: A
 
   FargateServiceTaskDefTaskRole:
     Type: AWS::IAM::Role
@@ -321,9 +287,9 @@ Resources:
         # More details: https://nextjs.org/docs/app/building-your-application/caching#full-route-cache
         - Name: code-dot-org-full-page-router-cache
           EFSVolumeConfiguration:
-            FilesystemId: !Ref MarketingCacheFileSystem
+            FilesystemId: !Ref CacheFileSystem
             AuthorizationConfig:
-              AccessPointId: !Ref CDOMarketingCacheAccessPoint
+              AccessPointId: !Ref CacheAccessPoint
               IAM: ENABLED
             TransitEncryption: ENABLED
 
@@ -418,7 +384,7 @@ Resources:
     DependsOn:
       - FargateServiceTaskDefTaskRole
 
-  MarketingStaticAssetsBucket:
+  StaticAssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${SubdomainName}.${BaseDomainName}-static-assets"
@@ -448,7 +414,7 @@ Resources:
   # Start AWS EFS Resources #
   ###########################
 
-  MarketingCacheFileSystem:
+  CacheFileSystem:
     Type: AWS::EFS::FileSystem
     Properties:
       Encrypted: true
@@ -461,18 +427,18 @@ Resources:
           Value: Marketing-EFS-Cache
 
 <% Config::REGIONS[aws_region.to_sym][:vpc][:private_subnets].each_with_index do |_, index| %>
-  MarketingCacheMountTarget<%= index %>:
+  CacheMountTarget<%= index %>:
     Type: AWS::EFS::MountTarget
     Properties:
-      FileSystemId: !Ref MarketingCacheFileSystem
+      FileSystemId: !Ref CacheFileSystem
       SubnetId: !Ref VpcPrivateSubnet<%= index %>
-      SecurityGroups: [!Ref MarketingCacheEFSSecurityGroup]
+      SecurityGroups: [!Ref CacheEFSSecurityGroup]
 <% end %>
 
-  CDOMarketingCacheAccessPoint:
+  CacheAccessPoint:
     Type: AWS::EFS::AccessPoint
     Properties:
-      FileSystemId: !Ref MarketingCacheFileSystem
+      FileSystemId: !Ref CacheFileSystem
       PosixUser:
         Uid: "1001" # Refer to the Dockerfile at frontend/apps/marketing/Dockerfile
         Gid: "1001" # Refer to the Dockerfile at frontend/apps/marketing/Dockerfile
@@ -483,7 +449,7 @@ Resources:
           OwnerGid: "1001"
           Permissions: "755"
 
-  MarketingCacheEFSSecurityGroup:
+  CacheEFSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow Marketing ECS to connect to EFS
@@ -502,22 +468,69 @@ Resources:
   # End AWS EFS Resources   #
   ###########################
 
+  ####################################
+  # Start AWS Cloudfront Resources   #
+  ####################################
+
+  CloudfrontALBVPCOrigin:
+    Type: AWS::CloudFront::VpcOrigin
+    Properties:
+      VpcOriginEndpointConfig:
+        Arn: !Ref FargateServiceLB
+        Name: Marketing-Sites-Application-LB-VPC-Origin
+        OriginProtocolPolicy: http-only
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Marketing Sites Application CloudFront Distribution
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+
+        Origins:
+          - Id: marketing-sites-application-origin
+            DomainName:
+              Fn::GetAtt:
+                - FargateServiceLB
+                - DNSName
+            VpcOriginConfig:
+              VpcOriginId: !Ref CloudfrontALBVPCOrigin
+
+        DefaultCacheBehavior:
+          TargetOriginId: marketing-sites-application-origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Caching Disabled (caching is via the frontdoor cloudfront)
+
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true  # For custom domain, replace with ACM cert ARN
+
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+
+  ################################
+  # End AWS Cloudfront Resources #
+  ################################
+
   ##########################################
   # Start Github Action Deployer Resources #
   ##########################################
 
-  MarketingGithubDeployerUser:
+  GithubDeployerUser:
     Type: AWS::IAM::User
     Properties:
       UserName: !Sub "github-deployer-${SubdomainName}.${BaseDomainName}"
 
-  MarketingGithubDeployerUserPolicy:
+  GithubDeployerUserPolicy:
     Type: 'AWS::IAM::Policy'
     Version: '2012-10-17'
     Properties:
-      PolicyName: MarketingGithubDeployerUserIamUserPolicy
+      PolicyName: GithubDeployerUserIamUserPolicy
       Users:
-        - Ref: MarketingGithubDeployerUser
+        - Ref: GithubDeployerUser
       PolicyDocument:
         Statement:
           - Effect: Allow
@@ -569,26 +582,26 @@ Resources:
               - "s3:PutObject"
               - "s3:ListBucket"
             Resource:
-              - !GetAtt MarketingStaticAssetsBucket.Arn
-              - !Sub "${MarketingStaticAssetsBucket.Arn}/*"
+              - !GetAtt StaticAssetsBucket.Arn
+              - !Sub "${StaticAssetsBucket.Arn}/*"
 
-  MarketingGithubDeployerAccessKey:
+  GithubDeployerAccessKey:
     Type: AWS::IAM::AccessKey
     Properties:
       UserName:
-        Ref: MarketingGithubDeployerUser
+        Ref: GithubDeployerUser
 
-  MarketingGithubDeployerAccessKeySecret:
+  GithubDeployerAccessKeySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
       SecretString:
         Fn::Join:
           - ""
           - - '{"accessKeyId":"'
-            - Ref: MarketingGithubDeployerAccessKey
+            - Ref: GithubDeployerAccessKey
             - '","secretAccessKey":"'
             - Fn::GetAtt:
-                - MarketingGithubDeployerAccessKey
+                - GithubDeployerAccessKey
                 - SecretAccessKey
             - '"}'
     UpdateReplacePolicy: Delete
@@ -617,28 +630,16 @@ Outputs:
     Export:
       Name:
         'Fn::Sub': '${AWS::StackName}-FargateServiceArn'
-  MarketingStaticAssetsBucketArn:
+  StaticAssetsBucketArn:
     Value:
       Fn::GetAtt:
-        - MarketingStaticAssetsBucket
+        - StaticAssetsBucket
         - Arn
     Export:
       Name:
-        'Fn::Sub': '${AWS::StackName}-MarketingStaticAssetsBucketArn'
+        'Fn::Sub': '${AWS::StackName}-StaticAssetsBucketArn'
   FargateServiceLoadBalancerDNS:
     Value:
       Fn::GetAtt:
         - FargateServiceLB
         - DNSName
-  FargateServiceDNS:
-    Value:
-      Ref: FargateServiceDNS
-    Export:
-      Name:
-        'Fn::Sub': '${AWS::StackName}-FargateServiceDNS'
-  FargateServiceServiceURL:
-    Value:
-      Fn::Join:
-        - ""
-        - - https://
-          - Ref: FargateServiceDNS

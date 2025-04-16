@@ -19,8 +19,7 @@ unless options.key?(:region)
 end
 
 puts "\nTransforming ERB to YAML for template '#{template_name}'..."
-`erb aws_region=#{options[:region]} -T - -r ./config.rb  #{template_file}.erb > #{template_name}.yml `
-`erb -T - -r ./config.rb #{template_file} > #{template_name}.yml`
+`erb aws_region=#{options[:region]} -T - -r ./config.rb  #{template_name}.yml.erb > #{template_name}.yml `
 if $?&.exitstatus == 0
   puts "Success!"
 else
