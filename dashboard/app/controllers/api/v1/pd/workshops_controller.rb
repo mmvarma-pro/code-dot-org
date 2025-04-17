@@ -214,7 +214,8 @@ class Api::V1::Pd::WorkshopsController < ApplicationController
 
   # POST /api/v1/pd/workshops/1/unstart (admin only)
   def unstart
-    @workshop.update!(started_at: nil)
+    # using update_column to skip validation
+    @workshop.update_column(:started_at, nil)
     head :no_content
   end
 
@@ -226,7 +227,8 @@ class Api::V1::Pd::WorkshopsController < ApplicationController
 
   # POST /api/v1/pd/workshops/1/reopen (admin only)
   def reopen
-    @workshop.update!(ended_at: nil)
+    # using update_column to skip validation
+    @workshop.update_column(:ended_at, nil)
     head :no_content
   end
 
@@ -307,7 +309,7 @@ class Api::V1::Pd::WorkshopsController < ApplicationController
 
   private def adjust_grades
     ws_params = params[:pd_workshop]
-    return unless ws_params.key?(:grades) ||  ws_params.key?("grades")
+    return unless ws_params.key?(:grades) || ws_params.key?("grades")
     new_grades = ws_params.delete(:grades) || ws_params.delete("grades")
     new_grades = [] if new_grades.blank?
     @workshop.grades = new_grades

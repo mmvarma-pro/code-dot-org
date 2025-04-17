@@ -164,7 +164,7 @@ class Api::V1::Pd::WorkshopsControllerTest < ActionController::TestCase
     create(:pd_enrollment, workshop: teachercon, email: teacher.email, user_id: teacher.id)
     create(:pd_enrollment, workshop: fit_weekend, email: teacher.email, user_id: teacher.id)
 
-    teachercon.update_column(:started_at, Time.zone.now)
+    teachercon.start!
 
     assert teachercon.state == Pd::Workshop::STATE_IN_PROGRESS
     assert fit_weekend.state == Pd::Workshop::STATE_NOT_STARTED
