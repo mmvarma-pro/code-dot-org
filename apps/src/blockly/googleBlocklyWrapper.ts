@@ -1124,6 +1124,7 @@ function initializeBlocklyWrapper(blocklyInstance: GoogleBlocklyInstance) {
   blocklyWrapper.localizeVariables = function (workspace) {
     // Go through the original variables and translate them.
     if (workspace.globalVariables) {
+      console.log('source globals', workspace.sourceGlobalVariables);
       workspace.sourceGlobalVariables ||= workspace.globalVariables.slice();
     }
 
@@ -1146,6 +1147,7 @@ function initializeBlocklyWrapper(blocklyInstance: GoogleBlocklyInstance) {
             newName
           );
         }
+        console.log('renaming', oldName, newName);
         workspace.renameVariableById(variable.getId(), newName);
         workspace.globalVariables[globalVariableIndex] = newName;
       }
