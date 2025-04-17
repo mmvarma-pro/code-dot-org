@@ -3,20 +3,21 @@ import FormFieldWrapper from '@code-dot-org/component-library/formFieldWrapper';
 import TextField from '@code-dot-org/component-library/textField';
 import {Heading2} from '@code-dot-org/component-library/typography';
 import classNames from 'classnames';
-import React, {FC, useMemo} from 'react';
+import React, {ChangeEvent, FC, memo, useMemo} from 'react';
 
 import {ParticipantGroupTypes} from '@cdo/apps/generated/pd/sharedWorkshopConstants';
 
-import {SectionProps} from '../types';
+import {AdditionalInfoProps} from '../types';
 
 import commonStyles from '../styles.module.scss';
 
-export const AdditionalInfo: FC<SectionProps> = ({
-  config: {
-    fields: {fee, participant_group_type, notes},
-  },
-  state,
-  handleChange,
+export const AdditionalInfo: FC<AdditionalInfoProps> = ({
+  config: {fields},
+  fee,
+  participantGroupType,
+  notes,
+  errors,
+  dispatchWorkshop,
 }) => {
   const participantGroupTypeOptions = useMemo(() => {
     return [
@@ -28,59 +29,90 @@ export const AdditionalInfo: FC<SectionProps> = ({
     ];
   }, []);
 
+  const handleChange = (
+    event: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    dispatchWorkshop({
+      type: 'UPDATE_WORKSHOP',
+      payload: {[event.target.name]: event.target.value},
+    });
+  };
+
+  if (!fields.fee && !fields.participant_group_type && !fields.notes) {
+    return null;
+  }
+
   return (
-    <>
+    <section>
       <Heading2 visualAppearance="heading-sm">Additional Information</Heading2>
-      <div className={commonStyles.row}>
-        {fee && (
-          <TextField
-            name="cost"
-            helperMessage="You can leave this field blank if the workshop is free"
-            onChange={e => handleChange({fee: e.target.value})}
-            value={state.fee}
-            label="Workshop cost"
-            size="s"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: fee.required,
-            })}
-          />
-        )}
-        {participant_group_type ? (
-          <SimpleDropdown
-            name="participant group type"
-            onChange={e => handleChange({participantGroupType: e.target.value})}
-            styleAsFormField={true}
-            items={participantGroupTypeOptions}
-            selectedValue={state.participantGroupType}
-            labelText="Cohort type"
-            size="s"
-            dropdownTextThickness="thin"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: participant_group_type.required,
-            })}
-          />
-        ) : (
-          <div className={commonStyles.item} />
-        )}
-      </div>
-      <div className={commonStyles.row}>
-        {notes && (
+      {(fields.fee || fields.participant_group_type) && (
+        <div className={commonStyles.row}>
+          {fields.fee && (
+            <TextField
+              name={fields.fee.stateKey}
+              helperMessage={fields.fee.helperMessage}
+              onChange={handleChange}
+              value={fee}
+              label={fields.fee.label}
+              size="s"
+              className={classNames(commonStyles.item, commonStyles.textField, {
+                [commonStyles.required]: fields.fee.required,
+              })}
+              errorMessage={errors.fee}
+            />
+          )}
+          {fields.participant_group_type ? (
+            <SimpleDropdown
+              name={fields.participant_group_type.stateKey}
+              onChange={handleChange}
+              styleAsFormField={true}
+              items={participantGroupTypeOptions}
+              selectedValue={participantGroupType}
+              labelText={fields.participant_group_type.label}
+              size="s"
+              dropdownTextThickness="thin"
+              className={classNames(
+                commonStyles.item,
+                commonStyles.simpleDropdown,
+                {
+                  [commonStyles.required]:
+                    fields.participant_group_type.required,
+                  [commonStyles.error]: errors.participantGroupType,
+                }
+              )}
+              errorMessage={errors.participantGroupType}
+            />
+          ) : (
+            <div className={commonStyles.item} />
+          )}
+        </div>
+      )}
+      {fields.notes && (
+        <div className={commonStyles.row}>
           <FormFieldWrapper
-            label="Attendee notes"
-            helperMessage="Notes for logistics like food, parking, or other event details."
+            label={fields.notes.label}
+            helperMessage={fields.notes.helperMessage}
             size="s"
-            className={classNames(commonStyles.item, commonStyles.required)}
+            className={classNames(commonStyles.item, commonStyles.textField, {
+              [commonStyles.required]: fields.notes.required,
+              [commonStyles.error]: errors.notes,
+            })}
+            errorMessage={errors.notes}
           >
             <textarea
               id="notes"
-              name="notes"
-              onChange={e => handleChange({notes: e.target.value})}
-              value={state.notes}
+              name={fields.notes.stateKey}
+              onChange={handleChange}
+              value={notes}
               placeholder="Enter attendee notes here"
             />
           </FormFieldWrapper>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </section>
   );
 };
+
+export default memo(AdditionalInfo);

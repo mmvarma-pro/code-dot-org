@@ -1,4 +1,5 @@
 @import 'color';
+@import 'https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap';
 
 // TeacherHomepage
 .teacherHomepage {
@@ -38,12 +39,8 @@
   gap: 6px;
 }
 
-.blankAnnouncement {
-  width: 320px;
-  min-width: 320px;
-  height: 600px;
-  background-color: var(--background-brand-purple-light);
-  margin-inline-start: 40px;
+.feedbackAlert {
+  margin-bottom: 20px;
 }
 
 // SectionList
@@ -51,6 +48,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin: 0;
 }
 
 // SectionCard
@@ -75,27 +73,50 @@
 
 .sectionCardHeaderLeft {
   display: flex;
+  flex: 1;
+  min-width: 0;
+
+  button {
+    margin-inline-end: 6px;
+
+    i {
+      font-size: 16px;
+    }
+  }
+}
+
+.sectionCardHeaderText {
+  display: flex;
   flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+
+  h5 {
+    height: 28px;
+    margin-bottom: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  p {
+    height: 22px;
+    margin-bottom: 0;
+
+    p {
+      margin: 0;
+    }
+
+    a {
+      color: var(--brand-teal-50);
+    }
+  }
 }
 
 .sectionCardHeaderRight {
   display: flex;
-}
-
-.sectionCardHeaderText {
-  height: 28px;
-}
-
-.sectionCardCode {
-  height: 22px;
-
-  p {
-    margin: 0;
-  }
-
-  a {
-    color: var(--brand-teal-50);
-  }
+  margin-inline-start: 6px;
 }
 
 // SectionOptionsDropdown
@@ -227,4 +248,141 @@
 
 .emptyStateButtonIcon {
   color: var(--brand-purple-50);
+}
+
+.emptyImage {
+  width: 220px;
+}
+
+// Teacher promotions
+
+.promotions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-inline-start: 40px;
+}
+
+.promotion {
+  position: relative;
+  width: 280px;
+  max-width: 280px;
+  min-height: 150px;
+  max-height: 800px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+
+  &.promotion-gray {
+    background-color: var(--background-neutral-secondary);
+  }
+
+  &.promotion-purple {
+    background-color: var(--background-brand-purple-extra-light);
+  }
+
+  &.promotion-blue {
+    background-color: var(--background-info-extra-light);
+  }
+
+  &.promotion-aqua {
+    background-color: var(--background-brand-aqua-light);
+  }
+
+  &.promotion-green {
+    background-color: var(--background-success-light);
+  }
+
+  &.promotion-strawberry {
+    background-color: var(--background-accent-strawberry-light);
+  }
+
+  &.promotion-orange {
+    background-color: var(--background-accent-orange-light);
+  }
+}
+
+.promotionType {
+  margin-bottom: 6px;
+}
+
+.promotionTitle {
+  margin-bottom: 16px;
+}
+
+.promotionImage {
+  width: 280px;
+  min-height: 160px;
+  margin-bottom: 20px;
+}
+
+.promotionPartnerLogo {
+  height: 22px;
+  max-width: 100%;
+  margin-top: 6px;
+  margin-bottom: 20px;
+
+  img {
+    height: 22px;
+  }
+}
+
+.promotionButton {
+  width: 100%;
+}
+
+.closeButton {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+}
+
+.imageSkeleton {
+  font-size: 160px;
+}
+
+.staticPromotions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.staticPromotion {
+  border: solid 1px var(--borders-neutral-primary);
+  background-color: var(--background-neutral-primary);
+  border-radius: 4px;
+  width: 280px;
+  max-width: 280px;
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+
+  p {
+    margin-bottom: 8px;
+  }
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.staticPromotionImage {
+  width: 50px;
+  min-height: 50px;
+  height: fit-content;
+  margin-inline-start: 8px;
+}
+
+// Section Avatars
+.sectionAvatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-family: 'Noto Color Emoji', sans-serif;
+  font-size: 32px;
+  margin-inline-end: 12px;
 }

@@ -15,6 +15,7 @@ require 'cdo/data/logging/infrastructure_logger'
 require 'cdo/git_utils'
 require 'cdo/rake_utils'
 require 'cdo/test_flakiness'
+require 'cdo/ci_utils'
 
 require 'haml'
 require 'json'
@@ -39,7 +40,7 @@ GIT_BRANCH = GitUtils.current_branch
 COMMIT_HASH = RakeUtils.git_revision
 LOCAL_LOG_DIRECTORY = File.join(UI_TEST_DIR, 'log')
 S3_LOGS_BUCKET = 'cucumber-logs'
-S3_LOGS_PREFIX = ENV['CI'] ? "circle/#{ENV.fetch('CI_BUILD_NUMBER', nil)}" : "#{Socket.gethostname}/#{GIT_BRANCH}"
+S3_LOGS_PREFIX = CI::Utils.running_on_ci? ? "circle/#{ENV.fetch('CI_BUILD_NUMBER', nil)}" : "#{Socket.gethostname}/#{GIT_BRANCH}"
 LOG_UPLOADER = AWS::S3::LogUploader.new(S3_LOGS_BUCKET, S3_LOGS_PREFIX, make_public: true)
 
 #
@@ -62,7 +63,7 @@ def main(options)
   open_log_files
   configure_for_eyes if eyes?
   report_tests_starting
-  generate_status_page(start_time) if options.with_status_page
+  run_status_page_url = generate_status_page(start_time) if options.with_status_page
 
   run_results = Parallel.map(browser_feature_generator, parallel_config(options.parallel_limit)) do |browser, feature|
     run_feature browser, feature, options
@@ -86,7 +87,7 @@ def main(options)
     return 1001
   end
 
-  report_tests_finished start_time, run_results
+  report_tests_finished start_time, run_results, run_status_page_url
   run_results.count {|feature_succeeded, _, _| !feature_succeeded}
 ensure
   close_log_files
@@ -105,6 +106,7 @@ def parse_options
     options.csedweek_domain = 'test.csedweek.org'
     options.local = nil
     options.local_headless = true
+    options.first_run_local = nil
     options.html = nil
     options.maximize = nil
     options.auto_retry = false
@@ -146,6 +148,9 @@ def parse_options
       end
       opts.on("--headed", "Open visible chrome browser windows. Runs in headless mode without this flag. Only relevant when -l is specified.") do
         options.local_headless = false
+      end
+      opts.on("--first-run-local", "Use the local webdriver (not Saucelabs) only for the first run of a test; reruns will use Saucelabs.") do
+        options.first_run_local = 'true'
       end
       opts.on("-p", "--pegasus Domain", String, "Specify an override domain for code.org, e.g. localhost.code.org:3000") do |p|
         if p == 'localhost:3000'
@@ -240,7 +245,7 @@ def parse_options
     if options.force_db_access
       options.pegasus_db_access = true
       options.dashboard_db_access = true
-    elsif ENV['CI']
+    elsif CI::Utils.running_on_ci?
       options.pegasus_db_access = true
       options.dashboard_db_access = true
     elsif rack_env?(:development)
@@ -413,7 +418,7 @@ def report_tests_starting
   end
 end
 
-def report_tests_finished(start_time, run_results)
+def report_tests_finished(start_time, run_results, run_status_page_url = nil)
   suite_duration = Time.now - start_time
 
   # How many flaky test reruns occurred across all tests (ignoring the initial attempt).
@@ -440,34 +445,42 @@ def report_tests_finished(start_time, run_results)
   Infrastructure::Logger.put('runner_feature_tests_successful_flaky_reruns', total_flaky_successful_reruns, extra_dimensions)
   Infrastructure::Logger.put('runner_feature_tests_count', run_results.count, extra_dimensions)
   Infrastructure::Logger.flush
-  ChatClient.log "#{suite_success_count} succeeded.  #{failures.count} failed. " \
-  "Test count: #{run_results.count}. " \
-  "Total duration: #{RakeUtils.format_duration(suite_duration)}. " \
-  "Total reruns of flaky tests: #{total_flaky_reruns}. " \
-  "Total successful reruns of flaky tests: #{total_flaky_successful_reruns}." \
-  + (status_page_url ? " <a href=\"#{status_page_url}\">#{test_type} test status page</a>." : '') \
-  + (applitools_batch_url ? " <a href=\"#{applitools_batch_url}\">Applitools results</a>." : '')
 
-  a_status_page = status_page_url ? "<a href=\"#{status_page_url}\">" : ''
-  end_a = status_page_url ? "</a>" : ''
+  test_report =  "\n#{test_type.upcase} TEST REPORT: #{failures.any? ? "*❌ FAILED*" : "*✅ PASSED*"}\n"
+  test_report += "\n#{failures.count}x failed features:\n" + failures.map {|failure| "• #{failure}\n"}.join if failures.any?
+  test_report += "\n"
+  test_report += "Applitools Eyes Results:\n#{applitools_batch_url}\n\n" if applitools_batch_url
+  test_report += "#{test_type} Test Status Page (permalink for this run):\n#{run_status_page_url}\n\n" if run_status_page_url
+  test_report += "#{test_type} Test Status Page (for this server, *if you're lost start here*):\n#{server_status_page_url}\n\n" unless CI::Utils.running_on_ci?
+  test_report += "\n"
+  test_report += "#{suite_success_count} passed. #{failures.count} failed. Test count: #{run_results.count}. Duration: #{RakeUtils.format_duration(suite_duration)}. Total successful reruns of flaky tests: #{total_flaky_successful_reruns}.\n"
+  test_report += "\n"
+  test_report += "\n*#{test_type.upcase}* TESTS #{failures.any? ? "FAILED" : "PASSED"}\n\n"
 
-  if failures.empty?
-    ChatClient.log "*#{a_status_page}SUMMARY, #{suite_success_count} DASHBOARD #{test_type.upcase} TESTS PASSED#{end_a}*", color: 'purple'
-  else
-    ChatClient.log "*#{a_status_page}SUMMARY, #{failures.count} DASHBOARD #{test_type.upcase} TESTS FAILED#{end_a}:*", color: 'purple'
-    failures.each do |failure|
-      ChatClient.log "\t• #{failure}", color: 'purple'
-    end
-  end
+  ChatClient.log test_report, color: 'purple'
 end
 
-def status_page_url
+def server_status_page_url
   return nil unless $options.with_status_page
   CDO.studio_url('/ui_test/' + status_page_filename, scheme_for_environment)
 end
 
 def status_page_filename
   "test_status_#{test_type}.html"
+end
+
+# Returns a permalink URL for the Test Status Page, assuming we can upload it to S3
+def upload_status_page_to_s3(status_page_path = File.join(UI_TEST_DIR, status_page_filename))
+  LOG_UPLOADER.upload_file(File.join(UI_TEST_DIR, 'test_status.css'), {content_type: 'text/css'})
+  LOG_UPLOADER.upload_file(File.join(UI_TEST_DIR, 'test_status.js'), {content_type: 'text/javascript'})
+
+  return LOG_UPLOADER.upload_file(status_page_path, {content_type: 'text/html'})
+rescue Aws::Sigv4::Errors::MissingCredentialsError
+  ChatClient.log "No AWS credentials set, skipping upload of the '#{test_type} Test Status Page' to S3"
+  nil
+rescue Exception => exception
+  ChatClient.log "WARNING: exception raised while attempting to upload the '#{test_type} Test Status Page' to S3:\n#{exception.class}: #{exception}\n#{exception.backtrace&.first(5)&.join("\n")}"
+  nil
 end
 
 def scheme_for_environment
@@ -477,8 +490,9 @@ end
 def generate_status_page(suite_start_time)
   test_status_template = File.read(File.join(UI_TEST_DIR, 'test_status.haml'))
   haml_engine = Haml::Engine.new(test_status_template)
+  status_page_path = File.join(UI_TEST_DIR, status_page_filename)
   File.write(
-    File.join(UI_TEST_DIR, status_page_filename),
+    status_page_path,
     haml_engine.render(
       Object.new,
       {
@@ -493,7 +507,10 @@ def generate_status_page(suite_start_time)
       }
     )
   )
-  ChatClient.log "A <a href=\"#{status_page_url}\">status page</a> has been generated for this #{test_type} test run."
+  run_status_page_url = upload_status_page_to_s3(status_page_path)
+  ChatClient.log "#{test_type} Test Status Page (permalink for this run):\n#{run_status_page_url}\n\n" if run_status_page_url
+  ChatClient.log "#{test_type} Test Status Page (for this server):\n#{server_status_page_url}\n\n" unless CI::Utils.running_on_ci?
+  return run_status_page_url
 end
 
 def test_run_identifier(browser, feature)
@@ -552,8 +569,8 @@ end
 def parallel_config(parallel_limit)
   {
     # Run in parallel threads on CI (less memory), processes on main test machine (better CPU utilization)
-    in_threads: ENV['CI'] ? parallel_limit : nil,
-    in_processes: ENV['CI'] ? nil : parallel_limit,
+    in_threads: CI::Utils.running_on_ci? ? parallel_limit : nil,
+    in_processes: CI::Utils.running_on_ci? ? nil : parallel_limit,
 
     # This 'finish' lambda runs on the main thread after each Parallel.map work
     # item is completed.
@@ -712,7 +729,7 @@ def cucumber_arguments_for_feature(options, test_run_string, max_reruns)
 
   # In CI we export additional logs in junit xml format so CI could in theory
   # provide pretty test reports with success/fail/timing data upon completion.
-  if ENV['CI']
+  if CI::Utils.running_on_ci?
     arguments += " --format junit --out $CI_TEST_REPORTS/cucumber/#{test_run_string}.xml"
   end
 
@@ -753,7 +770,7 @@ def run_feature(browser, feature, options)
   run_environment['DASHBOARD_TEST_DOMAIN'] = options.dashboard_domain if options.dashboard_domain
   run_environment['HOUROFCODE_TEST_DOMAIN'] = options.hourofcode_domain if options.hourofcode_domain
   run_environment['CSEDWEEK_TEST_DOMAIN'] = options.csedweek_domain if options.csedweek_domain
-  run_environment['TEST_LOCAL'] = options.local ? "true" : "false"
+  run_environment['TEST_LOCAL'] = (options.local || options.first_run_local) ? "true" : "false"
   run_environment['TEST_LOCAL_HEADLESS'] = options.local_headless ? "true" : "false"
   run_environment['MAXIMIZE_LOCAL'] = options.maximize ? "true" : "false"
   run_environment['MOBILE'] = browser['appium:mobile'] ? "true" : "false"
@@ -785,6 +802,10 @@ def run_feature(browser, feature, options)
       duration: test_duration.to_s
     }
   )
+
+  # After the first run, we no longer want to consider the `first_run_local`
+  # option when deciding whether a test should be run locally.
+  run_environment['TEST_LOCAL'] = options.local ? "true" : "false"
 
   # only retry cucumber/selenium errors, not eyes mismatches.
   while !cucumber_succeeded && (reruns < max_reruns)
@@ -872,7 +893,7 @@ def run_feature(browser, feature, options)
     end
   puts prefix_string("UI tests for #{test_run_string} #{result_string} (#{RakeUtils.format_duration(test_duration)}#{scenario_info}#{rerun_info}#{eyes_info})", log_prefix)
 
-  if scenario_count == 0 && !ENV['CI']
+  if scenario_count == 0 && !CI::Utils.running_on_ci?
     skip_warning = "We didn't actually run any tests, did you mean to do this?\n".yellow
     skip_warning += <<~EOS
       Check the excluded @tags in the cucumber command line above and in the #{feature} file:

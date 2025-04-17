@@ -1,13 +1,22 @@
+import Alert from '@code-dot-org/component-library/alert';
 import {Heading2} from '@code-dot-org/component-library/typography';
 import React from 'react';
 
+import {EVENTS, PLATFORMS} from '@cdo/apps/metrics/AnalyticsConstants.js';
+import analyticsReporter from '@cdo/apps/metrics/AnalyticsReporter';
 import {useAppDispatch, useAppSelector} from '@cdo/apps/util/reduxHooks';
 import i18n from '@cdo/locale';
 
-import {asyncLoadTeacherHomepageSectionData} from '../../teacherDashboard/teacherSectionsRedux';
+import {
+  asyncLoadTeacherHomepageSectionData,
+  asyncLoadCoteacherInvite,
+} from '../../teacherDashboard/teacherSectionsRedux';
+import CoteacherInviteNotification from '../CoteacherInviteNotification';
 
+import {EmptyHomepage} from './EmptyHomepage';
 import {Header} from './Header';
 import {SectionList} from './SectionList';
+import TeacherPromotions from './TeacherPromotions';
 
 import styles from './teacherHomepage.module.scss';
 
@@ -20,27 +29,78 @@ export const TeacherHomepage: React.FC = () => {
 
   React.useEffect(() => {
     dispatch(asyncLoadTeacherHomepageSectionData());
+    dispatch(asyncLoadCoteacherInvite());
   }, [dispatch]);
+
+  React.useEffect(() => {
+    analyticsReporter.sendEvent(
+      EVENTS.NEW_TEACHER_HOMEPAGE_VISITED,
+      {},
+      PLATFORMS.BOTH
+    );
+  }, []);
 
   const [selectedArchiveToggle, setSelectedArchiveToggle] =
     React.useState<ArchivedToggleOption>('teaching');
+
+  const sections = useAppSelector(state => state.teacherSections.sections);
+
+  // The server uses hidden to mean the same thing as archived.
+  const showHiddenOnly = selectedArchiveToggle === 'archived';
+
+  const numSections = React.useMemo(
+    () =>
+      Object.values(sections).filter(
+        section => showHiddenOnly === section.hidden
+      ).length,
+    [sections, showHiddenOnly]
+  );
+
+  const onArchiveToggleChange = (value: ArchivedToggleOption) => {
+    const toggleEvent =
+      value === 'teaching'
+        ? EVENTS.SECTION_LIST_TEACHING_TOGGLE_CLICKED
+        : EVENTS.SECTION_LIST_ARCHIVE_TOGGLE_CLICKED;
+    analyticsReporter.sendEvent(toggleEvent, {}, PLATFORMS.BOTH);
+    setSelectedArchiveToggle(value);
+  };
 
   return (
     <div className={styles.teacherHomepage}>
       <div className={styles.teacherHomepageBody}>
         <Heading2>{i18n.welcome({teacherName: teacherName})}</Heading2>
-
+        <Alert
+          className={styles.feedbackAlert}
+          size={'s'}
+          text={i18n.teacherHomePageFeedback()}
+          type="primary"
+          showIcon={true}
+          icon={{iconName: 'hand-wave'}}
+          isImmediateImportance={false}
+          link={{
+            text: i18n.feedbackHeader(),
+            href: 'https://usabi.li/do/a9ksz7qfbspy/iwhhup',
+            openInNewTab: true,
+            external: true,
+          }}
+          onClose={() => {}}
+        />
         <div className={styles.teacherHomepageContent}>
           <div className={styles.teacherHomepageLeftContent}>
             <Header
               selectedArchiveToggle={selectedArchiveToggle}
-              setSelectedArchiveToggle={setSelectedArchiveToggle}
+              setSelectedArchiveToggle={onArchiveToggleChange}
             />
-            <SectionList
-              showHiddenOnly={selectedArchiveToggle === 'archived'}
-            />
+            <CoteacherInviteNotification isForPl={false} />
+            {numSections === 0 ? (
+              <EmptyHomepage showHiddenOnly={showHiddenOnly} />
+            ) : (
+              <SectionList
+                showHiddenOnly={selectedArchiveToggle === 'archived'}
+              />
+            )}
           </div>
-          <div className={styles.blankAnnouncement} />
+          <TeacherPromotions />
         </div>
       </div>
     </div>

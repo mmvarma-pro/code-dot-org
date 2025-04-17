@@ -7,272 +7,325 @@ import Tags from '@code-dot-org/component-library/tags';
 import TextField from '@code-dot-org/component-library/textField';
 import {Heading2} from '@code-dot-org/component-library/typography';
 import classNames from 'classnames';
-import React, {FC, useMemo} from 'react';
+import React, {ChangeEvent, FC, memo, useCallback, useMemo} from 'react';
 
+import {useFetch} from '@cdo/apps/util/useFetch';
 import {StudentGradeLevels} from '@cdo/generated-scripts/sharedConstants';
 
-import {SectionProps} from '../types';
+import {BasicsProps, CourseOffering} from '../types';
 
 import commonStyles from '../styles.module.scss';
 
-export const Basics: FC<SectionProps> = ({
-  config: {
-    fields: {
-      name,
-      grades,
-      subject,
-      prereq,
-      capacity,
-      description,
-      course_offerings,
-    },
-  },
-  state,
-  handleChange,
+export const Basics: FC<BasicsProps> = ({
+  config: {fields},
+  name,
+  grades,
+  subject,
+  prereq,
+  hasPrereq,
+  capacity,
+  description,
   courseOfferings,
+  errors,
+  dispatchWorkshop,
 }) => {
-  const handleGradesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let selectedGrades = [...state.grades];
-    if (e.target.checked) {
-      selectedGrades.push(e.target.value);
-      selectedGrades.sort((a, b) => {
-        // sort 'K' to beginning
-        if (a === 'K') return -1;
-        if (b === 'K') return 1;
-        // sort 'Other' to end
-        if (a === 'Other') return 1;
-        if (b === 'Other') return -1;
-        const numA = Number(a);
-        const numB = Number(b);
-        if (isNaN(numA) || isNaN(numB)) return 0;
-        return numA - numB;
+  const {data: fetchedCourseOfferings} = useFetch<CourseOffering[]>(
+    fields.course_offerings
+      ? '/course_offerings/self_paced_pl_course_offerings'
+      : ''
+  );
+
+  const courseOfferingsById = useMemo(
+    () =>
+      fetchedCourseOfferings?.reduce(
+        (acc: Record<number, CourseOffering>, curr) => {
+          acc[curr.id] = curr;
+          return acc;
+        },
+        {}
+      ),
+    [fetchedCourseOfferings]
+  );
+
+  const handleChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >
+    ) => {
+      const {name, value} = e.target;
+      dispatchWorkshop({
+        type: 'UPDATE_WORKSHOP',
+        payload: {
+          [name]: name === 'hasPrereq' ? value === 'true' : value,
+        },
       });
-    } else {
-      selectedGrades = selectedGrades.filter(g => g !== e.target.value);
-    }
-    handleChange({grades: selectedGrades});
-  };
+    },
+    [dispatchWorkshop]
+  );
 
-  const handleCourseOfferingsChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    let selectedCourseOfferings = [...state.courseOfferings];
-    if (e.target.checked) {
-      selectedCourseOfferings.push(e.target.value);
-    } else {
-      selectedCourseOfferings = selectedCourseOfferings.filter(
-        co => co !== e.target.value
-      );
-    }
-    handleChange({courseOfferings: selectedCourseOfferings});
-  };
+  const handleGradesChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      dispatchWorkshop({
+        type: e.target.checked ? 'ADD_GRADE' : 'REMOVE_GRADE',
+        payload: e.target.value,
+      });
+    },
+    [dispatchWorkshop]
+  );
 
-  const removeCourseOffering = (id: string) => {
-    handleChange({
-      courseOfferings: state.courseOfferings.filter(co => co !== id),
+  const handleCourseOfferingsChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      dispatchWorkshop({
+        type: e.target.checked
+          ? 'ADD_COURSE_OFFERING'
+          : 'REMOVE_COURSE_OFFERING',
+        payload: e.target.value,
+      });
+    },
+    [dispatchWorkshop]
+  );
+
+  const handleSelectAllCourseOfferings = useCallback(() => {
+    dispatchWorkshop({
+      type: 'SET_COURSE_OFFERINGS',
+      payload: fetchedCourseOfferings?.map(({id}) => id.toString()) ?? [],
     });
-  };
+  }, [dispatchWorkshop, fetchedCourseOfferings]);
+
+  const handleClearAllCourseOfferings = useCallback(() => {
+    dispatchWorkshop({
+      type: 'SET_COURSE_OFFERINGS',
+      payload: [],
+    });
+  }, [dispatchWorkshop]);
+
+  const handleRemoveCourseOffering = useCallback(
+    (offeringId: string) => () => {
+      dispatchWorkshop({
+        type: 'REMOVE_COURSE_OFFERING',
+        payload: offeringId,
+      });
+    },
+    [dispatchWorkshop]
+  );
 
   const subjectOptions = useMemo(() => {
     let options = [{value: '', text: 'Select a subject'}];
-    if (subject?.options) {
+    if (fields.subject?.options) {
       options = options.concat(
-        subject.options.map(({value, label}) => ({value, text: label}))
+        fields.subject.options.map(({value, label}) => ({value, text: label}))
       );
     }
     return options;
-  }, [subject?.options]);
+  }, [fields.subject?.options]);
+
+  if (
+    !fields.name &&
+    !fields.grades &&
+    !fields.subject &&
+    !fields.prereq &&
+    !fields.capacity &&
+    !fields.description &&
+    !fields.course_offerings
+  ) {
+    return null;
+  }
 
   return (
-    <>
+    <section>
       <Heading2 visualAppearance="heading-sm">Workshop Basics</Heading2>
-      <div className={commonStyles.row}>
-        {name && (
-          <TextField
-            name="name"
-            onChange={e => handleChange({name: e.target.value})}
-            value={state.name}
-            label="Workshop name"
-            size="s"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: name.required,
-            })}
-          />
-        )}
-        {grades && (
-          <CheckboxDropdown
-            name="grades"
-            onChange={handleGradesChange}
-            styleAsFormField={true}
-            hideControls
-            checkedOptions={state.grades}
-            allOptions={StudentGradeLevels.map(value => ({
-              value,
-              label: value,
-            }))}
-            labelText="Grade levels"
-            size="s"
-            helperMessage="Select applicable grade levels for this workshop."
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: grades.required,
-            })}
-          />
-        )}
-        {subject && (
-          <SimpleDropdown
-            name="subject"
-            onChange={e => handleChange({subject: e.target.value})}
-            styleAsFormField={true}
-            items={subjectOptions}
-            selectedValue={state.subject}
-            labelText="Subject"
-            size="s"
-            dropdownTextThickness="thin"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: subject.required,
-            })}
-          />
-        )}
-      </div>
-      <div className={commonStyles.row}>
-        {prereq && (
-          <SimpleDropdown
-            name="has-prereq"
-            onChange={e => {
-              const hasPrereq = e.target.value === 'true';
-              handleChange({
-                hasPrereq,
-                prereq: hasPrereq ? state.prereq : '',
-              });
-            }}
-            styleAsFormField={true}
-            items={[
-              {value: 'true', text: 'Has prerequisites'},
-              {value: 'false', text: 'No experience needed'},
-            ]}
-            selectedValue={state.hasPrereq.toString()}
-            labelText="Experience needed"
-            helperMessage="Indicate if this workshop requires previous experience."
-            size="s"
-            dropdownTextThickness="thin"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: prereq.required,
-            })}
-          />
-        )}
-        {capacity && (
-          <TextField
-            inputType="number"
-            name="capacity"
-            onChange={e => handleChange({capacity: e.target.value})}
-            value={state.capacity?.toString()}
-            label="Capacity"
-            helperMessage="Maximum number of attendees allowed."
-            size="s"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: capacity.required,
-            })}
-          />
-        )}
-        {/* empty space aligns with optional subject */}
-        {subject && <div className={commonStyles.item} />}
-      </div>
-      <div className={commonStyles.row}>
-        {prereq && state.hasPrereq && (
-          <div className={commonStyles.card}>
+      {(fields.name || fields.grades || fields.subject) && (
+        <div className={commonStyles.row}>
+          {fields.name && (
             <TextField
-              name="prereq"
-              onChange={e => handleChange({prereq: e.target.value})}
-              value={state.prereq}
+              name={fields.name.stateKey}
+              onChange={handleChange}
+              value={name}
+              label={fields.name.label}
+              size="s"
+              className={classNames(commonStyles.item, commonStyles.textField, {
+                [commonStyles.required]: fields.name.required,
+              })}
+              helperMessage={fields.name.helperMessage}
+              errorMessage={errors.name}
+            />
+          )}
+          {fields.grades && (
+            <CheckboxDropdown
+              name={fields.grades.stateKey}
+              onChange={handleGradesChange}
+              styleAsFormField={true}
+              hideControls
+              checkedOptions={grades}
+              allOptions={StudentGradeLevels.map(value => ({
+                value,
+                label: value,
+              }))}
+              labelText={fields.grades.label}
+              size="s"
+              helperMessage={fields.grades.helperMessage}
+              className={classNames(
+                commonStyles.item,
+                commonStyles.customDropdown,
+                {
+                  [commonStyles.required]: fields.grades.required,
+                }
+              )}
+              errorMessage={errors.grades}
+            />
+          )}
+          {fields.subject && (
+            <SimpleDropdown
+              name={fields.subject.stateKey}
+              onChange={handleChange}
+              styleAsFormField={true}
+              items={subjectOptions}
+              selectedValue={subject}
+              labelText={fields.subject.label}
+              size="s"
+              dropdownTextThickness="thin"
+              className={classNames(
+                commonStyles.item,
+                commonStyles.simpleDropdown,
+                {
+                  [commonStyles.required]: fields.subject.required,
+                  [commonStyles.error]: errors.subject,
+                }
+              )}
+              errorMessage={errors.subject}
+            />
+          )}
+        </div>
+      )}
+      {(fields.prereq || fields.capacity) && (
+        <div className={commonStyles.row}>
+          {fields.prereq && (
+            <SimpleDropdown
+              name="hasPrereq"
+              onChange={handleChange}
+              styleAsFormField={true}
+              items={[
+                {value: 'true', text: 'Has prerequisites'},
+                {value: 'false', text: 'No experience needed'},
+              ]}
+              selectedValue={hasPrereq.toString()}
+              labelText={fields.prereq.label}
+              helperMessage={fields.prereq.helperMessage}
+              size="s"
+              dropdownTextThickness="thin"
+              className={classNames(
+                commonStyles.item,
+                commonStyles.simpleDropdown,
+                commonStyles.required
+              )}
+            />
+          )}
+          {fields.capacity && (
+            <TextField
+              inputType="number"
+              name={fields.capacity.stateKey}
+              onChange={handleChange}
+              value={capacity?.toString()}
+              label={fields.capacity.label}
+              helperMessage={fields.capacity.helperMessage}
+              size="s"
+              className={classNames(commonStyles.item, commonStyles.textField, {
+                [commonStyles.required]: fields.capacity.required,
+              })}
+              errorMessage={errors.capacity}
+            />
+          )}
+          {/* empty space aligns with optional subject */}
+          {fields.subject && <div className={commonStyles.item} />}
+        </div>
+      )}
+      {fields.prereq && hasPrereq && (
+        <div className={commonStyles.card}>
+          <div className={commonStyles.row}>
+            <TextField
+              name={fields.prereq.stateKey}
+              onChange={handleChange}
+              value={prereq}
               label="Workshop prerequisites"
               size="s"
-              className={classNames(commonStyles.item, {
-                [commonStyles.required]: prereq.required,
-              })}
+              className={classNames(
+                commonStyles.item,
+                commonStyles.textField,
+                commonStyles.required
+              )}
+              errorMessage={errors.prereq}
             />
           </div>
-        )}
-      </div>
-      <div className={commonStyles.row}>
-        {description && (
+        </div>
+      )}
+      {fields.description && (
+        <div className={commonStyles.row}>
           <FormFieldWrapper
-            label="Workshop description"
-            helperMessage="Public-facing summary to attract and inform participants."
+            label={fields.description.label}
+            helperMessage={fields.description.helperMessage}
             size="s"
-            className={classNames(commonStyles.item, commonStyles.required)}
+            className={classNames(commonStyles.item, commonStyles.textField, {
+              [commonStyles.required]: fields.description.required,
+              [commonStyles.error]: errors.description,
+            })}
+            errorMessage={errors.description}
           >
             <textarea
               id="description"
-              name="description"
-              onChange={e => handleChange({description: e.target.value})}
-              value={state.description}
+              name={fields.description.stateKey}
+              onChange={handleChange}
+              value={description}
               placeholder="Enter description here"
             />
           </FormFieldWrapper>
-        )}
-      </div>
-      <div className={commonStyles.row}>
-        {course_offerings && (
-          <CheckboxDropdown
-            name="course_offerings"
-            onChange={handleCourseOfferingsChange}
-            onSelectAll={() =>
-              handleChange({
-                courseOfferings:
-                  courseOfferings?.map(({id}) => id.toString()) ?? [],
-              })
-            }
-            selectAllText="Select all"
-            clearAllText="Clear all"
-            onClearAll={() => {
-              handleChange({courseOfferings: []});
-            }}
-            styleAsFormField={true}
-            checkedOptions={state.courseOfferings}
-            allOptions={
-              courseOfferings?.map(({id, display_name}) => ({
-                value: id.toString(),
-                label: display_name,
-              })) ?? []
-            }
-            labelText="Select workshop topic(s)"
-            size="s"
-            className={classNames(commonStyles.item, {
-              [commonStyles.required]: course_offerings.required,
-            })}
-          />
-        )}
-      </div>
-      <div>
-        {courseOfferings &&
-          state.courseOfferings.map(id => {
-            const topic =
-              courseOfferings.find(co => co.id === Number(id))?.display_name ??
-              '';
-            return (
-              <div className={commonStyles.tag_button_container}>
-                <Tags
-                  key={id}
-                  tagsList={[
-                    {
-                      label: topic,
-                      icon: {
-                        iconName: 'close',
-                        title: 'remove topic',
-                        iconStyle: 'regular',
-                        placement: 'right',
-                      },
-                    },
-                  ]}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeCourseOffering(id)}
-                />
-              </div>
-            );
-          })}
-      </div>
-    </>
+        </div>
+      )}
+      {fields.course_offerings && (
+        <div className={commonStyles.row}>
+          <div className={commonStyles.col}>
+            <CheckboxDropdown
+              name={fields.course_offerings.stateKey}
+              onChange={handleCourseOfferingsChange}
+              onSelectAll={handleSelectAllCourseOfferings}
+              selectAllText="Select all"
+              clearAllText="Clear all"
+              onClearAll={handleClearAllCourseOfferings}
+              styleAsFormField={true}
+              checkedOptions={courseOfferings}
+              allOptions={
+                fetchedCourseOfferings?.map(({id, display_name}) => ({
+                  value: id.toString(),
+                  label: display_name,
+                })) ?? []
+              }
+              labelText={fields.course_offerings.label}
+              size="s"
+              className={classNames(
+                commonStyles.item,
+                commonStyles.customDropdown,
+                {
+                  [commonStyles.required]: fields.course_offerings.required,
+                }
+              )}
+              errorMessage={errors.courseOfferings}
+            />
+            {courseOfferingsById && (
+              <Tags
+                className={commonStyles.wrapContainer}
+                tagsList={courseOfferings.map(offeringId => ({
+                  type: 'closable',
+                  onClose: handleRemoveCourseOffering(offeringId),
+                  label:
+                    courseOfferingsById[Number(offeringId)]?.display_name ?? '',
+                }))}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </section>
   );
 };
+
+export default memo(Basics);

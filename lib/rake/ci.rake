@@ -119,6 +119,7 @@ namespace :ci do
           "--parallel #{use_saucelabs ? 16 : 8} " \
           "--abort_when_failures_exceed 10 " \
           "--retry_count 2 " \
+          "--first_run_local " \
           "--output-synopsis " \
           "--with-status-page " \
           "--html"
@@ -131,6 +132,7 @@ namespace :ci do
             "--ci " \
             "--parallel 10 " \
             "--retry_count 1 " \
+            "--first_run_local " \
             "--with-status-page " \
             "--html"
       end
@@ -172,7 +174,6 @@ namespace :ci do
 
     Dir.chdir('dashboard') do
       RakeUtils.rake_stream_output 'seed:cached_ui_test'
-      RakeUtils.rake_stream_output 'seed:single_script SCRIPT_NAME="allthemigratedthings"'
     end
   end
 end
@@ -197,7 +198,7 @@ def close_sauce_connect
 end
 
 def check_for_new_file_changes
-  if GitUtils.changed_in_branch_or_local?(GitUtils.current_branch, ['dashboard/config/locales/*.en.yml'])
+  if GitUtils.changed_in_branch_or_local?(GitUtils.current_branch, ['dashboard/config/locales/*/en.yml'])
     RakeUtils.system_stream_output('git diff -- dashboard/config/locales | cat')
     raise 'Unexpected change to dashboard/config/locales/ - Make sure you run seeding locally and include those changes in your branch.'
   end

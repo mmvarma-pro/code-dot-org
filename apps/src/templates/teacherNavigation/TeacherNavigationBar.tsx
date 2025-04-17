@@ -35,7 +35,9 @@ import styles from './teacher-navigation.module.scss';
 const TeacherNavigationBar: React.FC<{
   showAITutorTab: boolean;
 }> = showAITutorTab => {
-  const sections = useAppSelector(state => state.teacherSections.sections);
+  const {sections, sectionOrder} = useAppSelector(
+    state => state.teacherSections
+  );
 
   const [sectionArray, setSectionArray] = useState<
     {value: string; text: string}[]
@@ -48,15 +50,17 @@ const TeacherNavigationBar: React.FC<{
   );
 
   useEffect(() => {
-    const updatedSectionArray = Object.entries(sections)
-      .filter(([id, section]) => !section.hidden)
-      .map(([id, section]) => ({
-        value: id,
+    const updatedSectionArray = sectionOrder
+      .map(sectionId => sections[sectionId] || null)
+      .filter(section => section !== null)
+      .filter(section => !section.hidden)
+      .map(section => ({
+        value: section.id.toString(),
         text: section.name,
       }));
 
     setSectionArray(updatedSectionArray);
-  }, [sections, selectedSection]);
+  }, [sections, selectedSection, sectionOrder]);
 
   const getSectionHeader = (label: string) => {
     return (
@@ -70,11 +74,34 @@ const TeacherNavigationBar: React.FC<{
     );
   };
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const urlSectionId = useParams().sectionId;
+
+  const [currentPathName, currentPathObject] = React.useMemo(() => {
+    return (
+      _.find(
+        Object.entries(LABELED_TEACHER_NAVIGATION_PATHS),
+        path => !!matchPath(path[1].absoluteUrl, location.pathname)
+      ) || [null, null]
+    );
+  }, [location]);
+
+  React.useEffect(() => {
+    if (urlSectionId && parseInt(urlSectionId) !== selectedSection?.id) {
+      asyncLoadSelectedSection(urlSectionId);
+    }
+  }, [urlSectionId, selectedSection?.id]);
+
   const coursecontentSectionTitle = getSectionHeader(i18n.courseContent());
 
   let courseContentKeys: (keyof typeof LABELED_TEACHER_NAVIGATION_PATHS)[];
   if (selectedSection?.unitName) {
-    courseContentKeys = ['unitOverview', 'lessonMaterials', 'calendar'];
+    if (currentPathName === TEACHER_NAVIGATION_PATH_NAMES.nestedUnitOverview) {
+      courseContentKeys = ['nestedUnitOverview', 'lessonMaterials', 'calendar'];
+    } else {
+      courseContentKeys = ['unitOverview', 'lessonMaterials', 'calendar'];
+    }
   } else {
     courseContentKeys = ['courseOverview', 'lessonMaterials', 'calendar'];
   }
@@ -122,25 +149,6 @@ const TeacherNavigationBar: React.FC<{
     },
   ];
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  const urlSectionId = useParams().sectionId;
-
-  const [currentPathName, currentPathObject] = React.useMemo(() => {
-    return (
-      _.find(
-        Object.entries(LABELED_TEACHER_NAVIGATION_PATHS),
-        path => !!matchPath(path[1].absoluteUrl, location.pathname)
-      ) || [null, null]
-    );
-  }, [location]);
-
-  React.useEffect(() => {
-    if (urlSectionId && parseInt(urlSectionId) !== selectedSection?.id) {
-      asyncLoadSelectedSection(urlSectionId);
-    }
-  }, [urlSectionId, selectedSection?.id]);
-
   const navigateToDifferentSection = (sectionId: number) => {
     if (currentPathObject?.absoluteUrl) {
       if (
@@ -184,6 +192,8 @@ const TeacherNavigationBar: React.FC<{
         (currentPathName === TEACHER_NAVIGATION_PATH_NAMES.courseOverview &&
           key === TEACHER_NAVIGATION_PATH_NAMES.unitOverview) ||
         (currentPathName === TEACHER_NAVIGATION_PATH_NAMES.unitOverview &&
+          key === TEACHER_NAVIGATION_PATH_NAMES.courseOverview) ||
+        (currentPathName === TEACHER_NAVIGATION_PATH_NAMES.nestedUnitOverview &&
           key === TEACHER_NAVIGATION_PATH_NAMES.courseOverview)
       );
     },
@@ -202,6 +212,7 @@ const TeacherNavigationBar: React.FC<{
         isSelected={isOptionSelected(key)}
         sectionId={selectedSection.id}
         courseVersionName={selectedSection.courseVersionName}
+        unitPosition={selectedSection.unitPosition}
         unitName={selectedSection.unitName}
         pathKey={key as keyof typeof LABELED_TEACHER_NAVIGATION_PATHS}
       />

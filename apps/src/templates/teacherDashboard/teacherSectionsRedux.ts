@@ -21,6 +21,10 @@ import {
 } from '@cdo/generated-scripts/sharedConstants';
 
 import {
+  getFilteredSectionOrderIds,
+  saveSectionOrder,
+} from './sectionOrderUtils';
+import {
   isAddingSection,
   sectionFromServerSection as untypedSectionFromServerSection,
   serverSectionFromSection,
@@ -65,6 +69,8 @@ export interface TeacherSectionState {
   sectionIds: number[];
   studentSectionIds: number[];
   plSectionIds: number[];
+  // A list of the user's un-archived, non-PL section IDs ordered by the user.
+  sectionOrder: number[];
   selectedSectionId: number | null;
   selectedSectionName: string;
   // Array of course offerings, to populate the assignment dropdown
@@ -125,6 +131,8 @@ const initialState: TeacherSectionState = {
   sectionIds: [],
   studentSectionIds: [],
   plSectionIds: [],
+  // A list of the user's un-archived, non-PL section IDs ordered by the user.
+  sectionOrder: [],
   selectedSectionId: NO_SECTION,
   selectedSectionName: '',
   // Array of course offerings, to populate the assignment dropdown
@@ -228,6 +236,7 @@ const sectionSlice = createSlice({
         action: PayloadAction<{
           sections: ServerSection[];
           autoSelectOnlySection: boolean;
+          sectionOrder: number[] | null;
         }>
       ) {
         const sections = action.payload.sections.map(sectionFromServerSection);
@@ -280,16 +289,22 @@ const sectionSlice = createSlice({
         state.sectionIds = sectionIds;
         state.studentSectionIds = studentSectionIds;
         state.plSectionIds = plSectionIds;
+
+        state.sectionOrder = getFilteredSectionOrderIds(
+          sections,
+          action.payload.sectionOrder || state.sectionOrder
+        );
         state.sections = {
           ...state.sections,
           ..._.keyBy(sections, 'id'),
         };
       },
-      prepare(sections, autoSelectOnlySection = true) {
+      prepare(sections, autoSelectOnlySection = true, sectionOrder = null) {
         return {
           payload: {
             sections,
             autoSelectOnlySection,
+            sectionOrder,
           },
         };
       },
@@ -394,6 +409,7 @@ const sectionSlice = createSlice({
       state.studentSectionIds = _.without(state.studentSectionIds, sectionId);
       state.plSectionIds = _.without(state.plSectionIds, sectionId);
       state.sections = _.omit(state.sections, sectionId);
+      state.sectionOrder = _.without(state.sectionOrder, sectionId);
     },
     beginCreatingSection: {
       reducer(
@@ -668,6 +684,33 @@ const sectionSlice = createSlice({
         state.sections[id].hidden = true;
       });
     },
+    setSectionOrder: {
+      reducer(
+        state,
+        action: PayloadAction<{sectionOrder: number[]; save: boolean}>
+      ) {
+        const result = getFilteredSectionOrderIds(
+          Object.values(state.sections),
+          action.payload.sectionOrder
+        );
+        if (
+          action.payload.save &&
+          !_.isEqual(result, action.payload.sectionOrder)
+        ) {
+          saveSectionOrder(result);
+        }
+
+        state.sectionOrder = result;
+      },
+      prepare(sectionOrder: number[], save = false) {
+        return {
+          payload: {
+            sectionOrder,
+            save,
+          },
+        };
+      },
+    },
   },
 });
 
@@ -793,7 +836,7 @@ type ParticipantTypesResponse = {
 };
 
 export const asyncLoadTeacherHomepageSectionData =
-  (): SectionThunkAction => dispatch => {
+  (): SectionThunkAction => (dispatch, getState) => {
     dispatch(beginAsyncLoad());
 
     const promises: Promise<object>[] = [
@@ -802,11 +845,22 @@ export const asyncLoadTeacherHomepageSectionData =
       ).then(response => dispatch(setCourseOfferings(response.value))),
       HttpClient.fetchJson<ParticipantTypesResponse>(
         '/dashboardapi/sections/available_participant_types'
-      ).then(response =>
-        dispatch(
+      ).then(response => {
+        if (
+          response.value.availableParticipantTypes.length === 1 &&
+          getState().teacherSections.sectionBeingEdited &&
+          !getState().teacherSections.sectionBeingEdited?.participantType
+        ) {
+          dispatch(
+            editSectionProperties({
+              participantType: response.value.availableParticipantTypes[0],
+            })
+          );
+        }
+        return dispatch(
           setAvailableParticipantTypes(response.value.availableParticipantTypes)
-        )
-      ),
+        );
+      }),
     ];
 
     return Promise.all(promises)
@@ -1170,6 +1224,7 @@ export const {
   sectionHasNewData,
   sectionDoesNotHaveNewData,
   archiveAllSections,
+  setSectionOrder,
 } = sectionSlice.actions;
 
 export default sectionSlice.reducer;

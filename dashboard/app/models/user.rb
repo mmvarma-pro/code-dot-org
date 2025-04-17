@@ -133,6 +133,13 @@ class User < ApplicationRecord
   MAX_SECRET_RESET_ATTEMPTS = 5
   RESET_SECRETS = 'reset_secrets'.freeze
 
+  # Password Constants
+  PASSWORD_MAX_LENGTH = 128
+  PASSWORD_MIN_LENGTH = 6
+  PASSWORD_STRICT_MIN_LENGTH = 14
+  # Countries that require a 14 character password minimum
+  PASSWORD_STRICT_COUNTRIES = %w[AU NZ].freeze
+
   # Provider variables
   PROVIDER_MANUAL = 'manual'.freeze # "old" user created by a teacher -- logs in w/ username + password
   PROVIDER_SPONSORED = 'sponsored'.freeze # "new" user created by a teacher -- logs in w/ name + secret picture/word
@@ -385,7 +392,7 @@ class User < ApplicationRecord
 
   validates_presence_of     :password, if: :password_required?
   validates_confirmation_of :password, if: :password_required?
-  validates_length_of       :password, within: 6..128, allow_blank: true
+  validates_length_of       :password, minimum: :password_min_length, maximum: :password_max_length, allow_blank: true
 
   validates_presence_of :email_preference_opt_in, if: :email_preference_opt_in_required
   validates_presence_of :email_preference_request_ip, if: -> {email_preference_opt_in.present?}
@@ -481,6 +488,14 @@ class User < ApplicationRecord
   include Devise::Models::ManualSessionExpiration
 
   acts_as_paranoid # use deleted_at column instead of deleting rows
+
+  def password_min_length
+    self.class.password_min_length(user_type, country_code)
+  end
+
+  def password_max_length
+    PASSWORD_MAX_LENGTH
+  end
 
   def save_email_preference
     if teacher?
@@ -1290,6 +1305,14 @@ class User < ApplicationRecord
     permission?(UserPermission::LEVELBUILDER)
   end
 
+  # Students can always access their own work, and teachers can access the work of
+  # students in their sections. This is specifically for the student work sample API
+  # which allows pulling student work samples to make datasets to gauge accuracy of
+  # our AI evaluation tools internally.
+  def can_access_student_work?
+    permission?(UserPermission::STUDENT_WORK_ACCESS)
+  end
+
   # A user is a verified instructor if you are a universal_instructor, plc_reviewer,
   # facilitator, authorized_teacher, or levelbuilder. All of these permissions tell us someone
   # should be trusted with locked down instructor only content. It is important to use this
@@ -1298,6 +1321,11 @@ class User < ApplicationRecord
     permission?(UserPermission::UNIVERSAL_INSTRUCTOR) || permission?(UserPermission::PLC_REVIEWER) ||
       permission?(UserPermission::FACILITATOR) || permission?(UserPermission::AUTHORIZED_TEACHER) ||
       permission?(UserPermission::LEVELBUILDER)
+  end
+
+  def can_view_all_facilitator_landing_pages?
+    permission?(UserPermission::PROGRAM_MANAGER) || permission?(UserPermission::WORKSHOP_ORGANIZER) ||
+      permission?(UserPermission::WORKSHOP_ADMIN)
   end
 
   def ai_tutor_permission?
@@ -2492,6 +2520,14 @@ class User < ApplicationRecord
     return super unless PartialRegistration.in_progress? session
     new_from_partial_registration session do |user|
       Services::User.assign_form_params(user, params)
+    end
+  end
+
+  def self.password_min_length(user_type, country_code)
+    if user_type == TYPE_TEACHER && PASSWORD_STRICT_COUNTRIES.include?(country_code) && DCDO.get('strict-password-country', false)
+      PASSWORD_STRICT_MIN_LENGTH
+    else
+      PASSWORD_MIN_LENGTH
     end
   end
 

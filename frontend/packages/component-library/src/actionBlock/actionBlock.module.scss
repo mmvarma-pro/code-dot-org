@@ -5,26 +5,17 @@ $mobileBreakpoint: 900px;
 // ActionBlock common styles
 .actionBlock {
   @include mixins.border-styles;
-  max-width: 100%;
   text-align: initial;
   padding: 1.25rem;
+  box-sizing: border-box;
+  width: 100%;
 
   figure {
-    position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
+    height: unset;
+    aspect-ratio: 7 / 4;
     margin: 0 0 1rem 0;
-
-    & > img {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    border-radius: 0;
   }
 
   .overline {
