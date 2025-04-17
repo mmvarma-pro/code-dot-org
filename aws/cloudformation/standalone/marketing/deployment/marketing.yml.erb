@@ -472,13 +472,37 @@ Resources:
   # Start AWS Cloudfront Resources   #
   ####################################
 
-  CloudfrontALBVPCOrigin:
+  CloudFrontALBVPCOrigin:
     Type: AWS::CloudFront::VpcOrigin
     Properties:
       VpcOriginEndpointConfig:
         Arn: !Ref FargateServiceLB
         Name: Marketing-Sites-Application-LB-VPC-Origin
         OriginProtocolPolicy: http-only
+
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "Cloudfront-OAC-${SubdomainName}.${BaseDomainName}"
+        SigningBehavior: always
+        SigningProtocol: sigv4
+        OriginAccessControlOriginType: s3
+
+  StaticAssetsBucketCloudFrontPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticAssetsBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${StaticAssetsBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
 
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
@@ -496,7 +520,12 @@ Resources:
                 - FargateServiceLB
                 - DNSName
             VpcOriginConfig:
-              VpcOriginId: !Ref CloudfrontALBVPCOrigin
+              VpcOriginId: !Ref CloudFrontALBVPCOrigin
+          - Id: marketing-sites-static-assets-origin
+            DomainName: !GetAtt StaticAssetsBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+            OriginAccessControlId: !Ref CloudFrontOriginAccessControl
 
         DefaultCacheBehavior:
           TargetOriginId: marketing-sites-application-origin
@@ -511,101 +540,36 @@ Resources:
           GeoRestriction:
             RestrictionType: none
 
+        CacheBehaviors:
+          # Path: /api/*
+          # Description: Marketing application API routes
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Caching Disabled (APIs are not cached)
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AllViewer
+            PathPattern: /api/*
+            TargetOriginId: marketing-sites-application-origin
+            ViewerProtocolPolicy: redirect-to-https
+          # Path: /_next/*
+          # Description: Marketing _application_ static assets
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Caching Disabled (caching is via the frontdoor cloudfront)
+            PathPattern: /_next/*
+            TargetOriginId: marketing-sites-static-assets-origin
+            ViewerProtocolPolicy: redirect-to-https
+
   ################################
   # End AWS Cloudfront Resources #
   ################################
-
-  ##########################################
-  # Start Github Action Deployer Resources #
-  ##########################################
-
-  GithubDeployerUser:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: !Sub "github-deployer-${SubdomainName}.${BaseDomainName}"
-
-  GithubDeployerUserPolicy:
-    Type: 'AWS::IAM::Policy'
-    Version: '2012-10-17'
-    Properties:
-      PolicyName: GithubDeployerUserIamUserPolicy
-      Users:
-        - Ref: GithubDeployerUser
-      PolicyDocument:
-        Statement:
-          - Effect: Allow
-            Action:
-              - 'cloudformation:CreateStack'
-              - 'cloudformation:DescribeStacks'
-              - 'cloudformation:CreateChangeSet'
-              - 'cloudformation:DescribeChangeSet'
-              - 'cloudformation:DeleteChangeSet'
-              - 'cloudformation:ExecuteChangeSet'
-            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
-          - Effect: Allow
-            Action:
-              - 'iam:GetRole'
-              - 'iam:PassRole'
-            Resource:
-              Fn::GetAtt:
-                - FargateServiceTaskDefExecutionRole
-                - Arn
-          - Effect: Allow
-            Action:
-              - 'iam:GetRole'
-              - 'iam:PassRole'
-            Resource:
-              Fn::GetAtt:
-                - FargateServiceTaskDefTaskRole
-                - Arn
-          - Effect: Allow
-            Action:
-              - 'ecs:RegisterTaskDefinition'
-            Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${AWS::StackName}-FargateServiceTaskDef:*"
-          - Effect: Allow
-            Action:
-              - 'ecs:DeregisterTaskDefinition'
-              - 'ecs:DescribeTaskDefinition'
-              - 'elasticloadbalancing:DescribeLoadBalancers'
-            Resource: '*'
-          - Effect: Allow
-            Action:
-              - 'ec2:DescribeSecurityGroups'
-            Resource: '*'
-          - Effect: Allow
-            Action:
-              - 'ecs:DescribeServices'
-              - 'ecs:UpdateService'
-            Resource: !Ref FargateService
-          - Effect: Allow
-            Action:
-              - "s3:PutObject"
-              - "s3:ListBucket"
-            Resource:
-              - !GetAtt StaticAssetsBucket.Arn
-              - !Sub "${StaticAssetsBucket.Arn}/*"
-
-  GithubDeployerAccessKey:
-    Type: AWS::IAM::AccessKey
-    Properties:
-      UserName:
-        Ref: GithubDeployerUser
-
-  GithubDeployerAccessKeySecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      SecretString:
-        Fn::Join:
-          - ""
-          - - '{"accessKeyId":"'
-            - Ref: GithubDeployerAccessKey
-            - '","secretAccessKey":"'
-            - Fn::GetAtt:
-                - GithubDeployerAccessKey
-                - SecretAccessKey
-            - '"}'
-    UpdateReplacePolicy: Delete
-    DeletionPolicy: Delete
 
 Outputs:
   FargateServiceTaskDefExecutionRoleArn:
