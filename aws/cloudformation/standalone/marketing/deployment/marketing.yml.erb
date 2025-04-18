@@ -504,6 +504,53 @@ Resources:
               StringEquals:
                 AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
 
+  ApplicationCachingPolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: MarketingAppCachePolicy
+        DefaultTTL: 86400
+        MaxTTL: 31536000
+        MinTTL: 1
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - RSC
+              - Next-Router-State-Tree
+              - Next-Router-Prefetch
+              - next-url
+              - Accept
+              - x-prerender-revalidate
+          CookiesConfig:
+            CookieBehavior: whitelist
+            Cookies:
+              - __prerender_bypass
+          QueryStringsConfig:
+            QueryStringBehavior: none
+        Comment: Cache policy for the marketing app
+
+  CloudFrontViewerResponseFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: AddCacheBypassHeader
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Adds x-bypass-cache header with a timestamp
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+            let response = event.response;
+
+            response.headers['x-bypass-cache'] = {
+                value: `${Date.now()}`
+            };
+
+            return response;
+        }
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -531,7 +578,10 @@ Resources:
           TargetOriginId: marketing-sites-application-origin
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
-          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Caching Disabled (caching is via the frontdoor cloudfront)
+          CachePolicyId: !Ref ApplicationCachingPolicy
+          FunctionAssociations:
+            - EventType: viewer-response
+              FunctionARN: !GetAtt CloudFrontViewerResponseFunction.FunctionARN
 
         ViewerCertificate:
           CloudFrontDefaultCertificate: true  # For custom domain, replace with ACM cert ARN
@@ -551,18 +601,19 @@ Resources:
               - POST
               - PATCH
               - DELETE
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Caching Disabled (APIs are not cached)
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Managed-CachingDisabled (APIs are not cached)
             OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AllViewer
             PathPattern: /api/*
             TargetOriginId: marketing-sites-application-origin
             ViewerProtocolPolicy: redirect-to-https
+
           # Path: /_next/*
           # Description: Marketing _application_ static assets
           - AllowedMethods:
               - GET
               - HEAD
               - OPTIONS
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Caching Disabled (caching is via the frontdoor cloudfront)
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # Managed-CachingOptimized
             PathPattern: /_next/*
             TargetOriginId: marketing-sites-static-assets-origin
             ViewerProtocolPolicy: redirect-to-https
