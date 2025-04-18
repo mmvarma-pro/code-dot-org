@@ -532,25 +532,6 @@ Resources:
             QueryStringBehavior: none
         Comment: Cache policy for the marketing app
 
-  CloudFrontViewerResponseFunction:
-    Type: AWS::CloudFront::Function
-    Properties:
-      Name: AddCacheBypassHeader
-      AutoPublish: true
-      FunctionConfig:
-        Comment: Adds x-bypass-cache header with a timestamp
-        Runtime: cloudfront-js-2.0
-      FunctionCode: |
-        function handler(event) {
-            let response = event.response;
-
-            response.headers['x-bypass-cache'] = {
-                value: `${Date.now()}`
-            };
-
-            return response;
-        }
-
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -579,9 +560,6 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
           CachePolicyId: !Ref ApplicationCachingPolicy
-          FunctionAssociations:
-            - EventType: viewer-response
-              FunctionARN: !GetAtt CloudFrontViewerResponseFunction.FunctionARN
 
         ViewerCertificate:
           CloudFrontDefaultCertificate: true  # For custom domain, replace with ACM cert ARN
